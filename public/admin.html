@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <nav class="navbar">
+        <button id="showEventsBtn">Ver Eventos</button>
+    </nav>
+    
+    <div class="container">
+        <div id="eventList" style="display: none;"></div>
+        
+        <form id="eventForm">
+            <h2>Crear Nuevo Evento</h2>
+            <input type="text" id="name" placeholder="Nombre del evento" required>
+            <textarea id="description" placeholder="Descripción" required></textarea>
+            <input type="text" id="author" placeholder="Autor" required>
+            <input type="text" id="location" placeholder="Ubicación" required>
+            <input type="text" id="photo" placeholder="URL de la foto" required>
+            <input type="number" id="capacity" placeholder="Capacidad" required>
+            
+            <div id="schedules">
+                <div class="schedule-container">
+                    <input type="time" class="schedule-time" required>
+                </div>
+            </div>
+            
+            <button type="button" class="add-schedule-btn">Agregar otro horario</button>
+            <button type="submit" class="submit-btn">Crear Evento</button>
+        </form>
+    </div>
+
+    <script src="/js/admin.js"></script>
+</body>
+</html>

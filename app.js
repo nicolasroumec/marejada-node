@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Rutas de autenticación
 app.use('/api/auth', authRoutes);
+app.use('/admin', adminRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {
