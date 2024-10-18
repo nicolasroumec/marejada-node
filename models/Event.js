@@ -19,6 +19,25 @@ export const deleteEvent = async (eventId) => {
 };
 
 export const listEvents = async () => {
-    const result = await pool.query('SELECT * FROM events');
-    return result.rows;
+    const query = `
+        SELECT 
+            e.*,
+            json_agg(
+                json_build_object(
+                    'id', s.id,
+                    'start_time', s.start_time,
+                    'capacity', s.capacity
+                )
+            ) as schedules
+        FROM events e
+        LEFT JOIN schedules s ON e.id = s.event_id
+        GROUP BY e.id
+    `;
+    const result = await pool.query(query);
+    
+    // Transformar null en array vacío cuando no hay horarios
+    return result.rows.map(event => ({
+        ...event,
+        schedules: event.schedules[0] === null ? [] : event.schedules
+    }));
 };

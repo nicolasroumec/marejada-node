@@ -3,6 +3,7 @@ body {
     line-height: 1.6;
     margin: 0;
     padding: 0;
+    min-height: 100vh;
 }
 
 .container {
@@ -10,34 +11,83 @@ body {
     margin: auto;
     overflow: hidden;
     padding: 20px;
+    margin-bottom: 40px; /* Espacio al final del contenedor */
 }
 
-.navbar {
+#showEventsBtn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
     background-color: #333;
     color: #fff;
-    padding: 10px;
-    text-align: center;
-}
-
-.navbar button {
-    background: none;
     border: none;
-    color: #fff;
+    padding: 10px 20px;
     cursor: pointer;
     font-size: 16px;
+    z-index: 1000;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 999;
+    overflow-y: auto;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto; /* Cambiado de 15% a 5% para que aparezca más arriba */
+    padding: 20px;
+    width: 70%;
+    border-radius: 5px;
+    max-height: 80vh; /* Altura máxima del modal */
+    overflow-y: auto; /* Permite scroll dentro del modal */
+    position: relative;
+}
+
+.close {
+    position: sticky;
+    top: 0;
+    float: right;
+    cursor: pointer;
+    font-size: 24px;
+    background: white;
+    padding: 5px;
+    z-index: 1001;
 }
 
 #eventList {
     margin-top: 20px;
+    max-height: calc(80vh - 100px); /* Altura máxima de la lista */
+    overflow-y: auto;
 }
 
 .event-item {
     background: #f4f4f4;
     padding: 10px;
     margin-bottom: 10px;
+}
+
+.event-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer;
+    padding: 10px;
+    background: #e0e0e0;
+}
+
+.event-details {
+    display: none;
+    padding: 15px;
+    margin-top: 5px;
+    background-color: #fff;
+    border: 1px solid #ddd;
 }
 
 .delete-btn {
@@ -52,25 +102,52 @@ form {
     background: #f4f4f4;
     padding: 20px;
     margin-top: 20px;
+    border-radius: 5px;
 }
 
-input[type="text"], input[type="number"], textarea {
+input[type="text"], 
+input[type="number"], 
+input[type="time"],
+textarea {
     width: 100%;
     padding: 8px;
     margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
 }
 
 .schedule-container {
     margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
-.add-schedule-btn, .submit-btn {
+.schedule-container input[type="time"] {
+    flex: 1;
+}
+
+.add-schedule-btn {
     background-color: #333;
     color: #fff;
     border: none;
     padding: 10px 15px;
     cursor: pointer;
     margin-top: 10px;
+    width: 100%;
+    border-radius: 4px;
+}
+
+.submit-btn {
+    background-color: #ff4081;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+    border-radius: 4px;
 }
 
 .remove-schedule-btn {
@@ -79,5 +156,23 @@ input[type="text"], input[type="number"], textarea {
     border: none;
     padding: 5px 10px;
     cursor: pointer;
-    margin-left: 10px;
+    border-radius: 4px;
+}
+
+/* Estilos para el scroll personalizado */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }

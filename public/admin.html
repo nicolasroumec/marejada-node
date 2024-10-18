@@ -7,13 +7,17 @@
     <link rel="stylesheet" href="/css/admin.css">
 </head>
 <body>
-    <nav class="navbar">
-        <button id="showEventsBtn">Ver Eventos</button>
-    </nav>
+    <button id="showEventsBtn">Ver Eventos</button>
+    
+    <div id="eventsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Lista de Eventos</h2>
+            <div id="eventList"></div>
+        </div>
+    </div>
     
     <div class="container">
-        <div id="eventList" style="display: none;"></div>
-        
         <form id="eventForm">
             <h2>Crear Nuevo Evento</h2>
             <input type="text" id="name" placeholder="Nombre del evento" required>
