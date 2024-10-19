@@ -1,20 +1,18 @@
 import pool from '../config/database.js';
 
-export const createEvent = async ({ name, description, author, location, photo }) => {
+export const createEvent = async ({ name, description, author, location, photo, type, duration }) => {
     const query = `
-        INSERT INTO events (name, description, author, location, photo)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO events (name, description, author, location, photo, type, duration)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *;
     `;
-    const values = [name, description, author, location, photo];
+    const values = [name, description, author, location, photo, type, duration];
     const result = await pool.query(query, values);
     return result.rows[0];
 };
 
 export const deleteEvent = async (eventId) => {
-    // Borrar horarios asociados al evento
     await pool.query('DELETE FROM schedules WHERE event_id = $1', [eventId]);
-    // Borrar el evento
     await pool.query('DELETE FROM events WHERE id = $1', [eventId]);
 };
 

@@ -48,6 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p><strong>Autor:</strong> ${event.author}</p>
                             <p><strong>Ubicación:</strong> ${event.location}</p>
                             <p><strong>Foto:</strong> ${event.photo || 'No disponible'}</p>
+                            <p><strong>Tipo:</strong> ${event.type}</p>
+                            <p><strong>Duración:</strong> ${event.duration}</p>
                             <p><strong>Horarios:</strong></p>
                             <ul>
                                 ${schedulesHtml}
@@ -116,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         const schedulesList = Array.from(scheduleInputs).map(container => ({
-            start_time: container.querySelector('.schedule-time').value,
+            startTime: container.querySelector('.schedule-time').value,
             capacity: capacity
         }));
 
@@ -131,6 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
             author: document.getElementById('author').value,
             location: document.getElementById('location').value,
             photo: document.getElementById('photo').value,
+            type: document.getElementById('type').value,
+            duration: document.getElementById('duration').value,
             schedules: schedulesList,
             capacity: capacity
         };
