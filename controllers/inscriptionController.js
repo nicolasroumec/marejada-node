@@ -13,7 +13,7 @@ exports.inscribeUser = async (req, res) => {
 
         if (checkInscription.rows.length > 0) {
             return res.status(400).json({ message: 'Ya estás inscrito en este evento.' });
-        }
+        };
 
         // Inserta la inscripción en la base de datos
         const newInscription = await pool.query(

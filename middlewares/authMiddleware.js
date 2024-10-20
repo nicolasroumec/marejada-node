@@ -1,3 +1,4 @@
+//Autenticador que hace de puente entre la logica de negocio y el uso de tokens
 import jwt from 'jsonwebtoken';
 
 const authMiddleware = async (req, res, next) => {

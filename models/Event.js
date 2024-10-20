@@ -1,3 +1,5 @@
+//Los models abstraen como estan hechas las tablas de la base de datos de la aplicacion
+
 import pool from '../config/database.js';
 
 export const createEvent = async ({ name, description, author, location, photo }) => {

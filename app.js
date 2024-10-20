@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import inscriptionRoutes from './routes/inscriptionRoutes.js'
 
 dotenv.config();
 
@@ -21,6 +22,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Rutas de autenticación
 app.use('/api/auth', authRoutes);
 app.use('/admin', adminRoutes);
+app.use('/api/inscriptions',inscriptionRoutes) //
+
+
+
+
 
 // Ruta raíz
 app.get('/', (req, res) => {
