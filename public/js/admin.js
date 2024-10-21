@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    eventForm.addEventListener('submit', createEvent);
+    addScheduleBtn.addEventListener('click', addScheduleInput);
+
     function fetchEvents() {
         fetch('/admin/events')
             .then(response => response.json())
@@ -31,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const eventElement = document.createElement('div');
                     eventElement.className = 'event-item';
                     
-                    // Crear el HTML para los horarios
                     const schedulesHtml = event.schedules && event.schedules.length > 0
                         ? event.schedules.map(schedule => 
                             `<li>Hora: ${formatTime(schedule.start_time)} - Capacidad: ${schedule.capacity} personas</li>`
@@ -106,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(error => console.error('Error:', error));
     }
 
-    eventForm.addEventListener('submit', function(e) {
+    function createEvent(e) {
         e.preventDefault();
         
         const scheduleInputs = document.querySelectorAll('.schedule-container');
@@ -165,9 +167,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error:', error);
             alert('Error al crear el evento');
         });
-    });
+    }
 
-    addScheduleBtn.addEventListener('click', function() {
+    function addScheduleInput() {
         const container = document.createElement('div');
         container.className = 'schedule-container';
         container.innerHTML = `
@@ -179,5 +181,5 @@ document.addEventListener('DOMContentLoaded', () => {
         container.querySelector('.remove-schedule-btn').addEventListener('click', function() {
             schedules.removeChild(container);
         });
-    });
+    }
 });

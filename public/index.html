@@ -7,23 +7,82 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="navbar-brand">
-            Marejada
-        </div>
+    <header class="bg-gray-900 text-white p-4">
+        <nav class="navbar">
+            <div class="navbar-brand">Marejada</div>
+            <div class="navbar-links no-auth-only">
+                <button id="loginBtn" data-modal="loginModal">Iniciar Sesión</button>
+                <button id="registerBtn" data-modal="registerModal">Registrarse</button>
+            </div>
+            <div class="navbar-links auth-only">
+                <span id="userFullName"></span>
+                <div class="user-menu-container">
+                    <button id="userMenuButton">Usuario</button>
+                    <div id="userMenu" class="user-menu">
+                        <a id="logoutBtn">Cerrar sesión</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto flex-grow p-4">
+        <div id="countdown" class="text-center py-8"></div>
         
-        <div class="navbar-links no-auth-only">
-            <button id="loginBtn">Iniciar Sesión</button>
-            <button id="registerBtn">Registrarse</button>
+        <div id="filters">
+            <label for="search">Buscar actividades:</label>
+            <input type="text" id="search" placeholder="Buscar actividad por nombre">
         </div>
+        <div id="time-labels"></div>
 
-        <div class="navbar-links auth-only">
-            <span id="userFullName"></span>
-            <button id="logoutBtn">Cerrar Sesión</button>
+        <section id="schedule" class="grid gap-6">
+            <!-- Las actividades se generarán dinámicamente aquí -->
+        </section>
+
+        <template id="activity-card-template">
+            <div class="activity-card bg-gray-900 rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105">
+                <div class="relative">
+                    <img src="" alt="" class="w-full h-48 sm:h-64 object-cover">
+                    <div class="activity-type absolute top-0 right-0 bg-red-600 text-white px-2 py-1 m-2 rounded-full text-sm font-semibold">
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h4 class="activity-name text-xl font-bold text-white mb-2"></h4>
+                    <p class="activity-description text-gray-300 mb-4 line-clamp-2"></p>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center">
+                            <span class="activity-duration text-gray-300 text-sm"></span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="activity-author text-gray-300 text-sm"></span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="activity-spots text-sm font-medium text-gray-300">
+                            Cupos disponibles: <span class="available-spots text-white"></span>
+                        </div>
+                        <div class="activity-time text-sm font-medium text-gray-300">
+                            Hora: <span class="start-time text-white"></span>
+                        </div>
+                    </div>
+                    <button class="inscription-button w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300 ease-in-out transform hover:-translate-y-1">
+                        Inscribirse
+                    </button>
+                </div>
+            </div>
+        </template>
+    </main>
+
+    <footer class="bg-gray-900 text-white p-4 mt-8">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+                <a href="#" class="hover:text-red-500 mr-4">Instagram</a>
+                <a href="#" class="hover:text-red-500">Política de Privacidad</a>
+            </div>
+            <p>&copy; 2024 Noche de Terror Escolar. Todos los derechos reservados.</p>
         </div>
-    </nav>
+    </footer>
 
-    <!-- Modal de Login -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -42,7 +101,6 @@
         </div>
     </div>
 
-    <!-- Modal de Registro -->
     <div id="registerModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>

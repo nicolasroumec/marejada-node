@@ -4,11 +4,23 @@ import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/register', authController.register);
-router.post('/login', authController.login);
+// Middleware para manejar errores
+const errorHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
 
-router.get('/me', authMiddleware, (req, res) => {
+// Ruta para registrar un nuevo usuario
+router.post('/register', errorHandler(authController.register));
+
+// Ruta para iniciar sesión
+router.post('/login', errorHandler(authController.login));
+
+// Ruta para obtener información del usuario autenticado
+router.get('/me', authMiddleware, errorHandler((req, res) => {
     res.json({ user: req.user });
-})
+}));
+
+// Ruta para cerrar sesión (si es necesario)
+router.post('/logout', authMiddleware, errorHandler(authController.logout));
 
 export default router;

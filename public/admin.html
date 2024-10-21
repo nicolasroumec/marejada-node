@@ -7,7 +7,10 @@
     <link rel="stylesheet" href="/css/admin.css">
 </head>
 <body>
-    <button id="showEventsBtn">Ver Eventos</button>
+    <nav class="navbar">
+        <h1>Panel de Administración</h1>
+        <button id="showEventsBtn">Ver Eventos</button>
+    </nav>
     
     <div id="eventsModal" class="modal">
         <div class="modal-content">
@@ -20,18 +23,44 @@
     <div class="container">
         <form id="eventForm">
             <h2>Crear Nuevo Evento</h2>
-            <input type="text" id="name" placeholder="Nombre del evento" required>
-            <input type="text" id="type" placeholder="Tipo de evento" required>
-            <textarea id="description" placeholder="Descripción" required></textarea>
-            <input type="text" id="author" placeholder="Autor" required>
-            <input type="text" id="location" placeholder="Ubicación" required>
-            <input type="text" id="photo" placeholder="URL de la foto" required>
-            <input type="number" id="capacity" placeholder="Capacidad" required>
-            <input type="text" id="duration" placeholder="Duración" required>
+            <div class="form-group">
+                <label for="name">Nombre del evento</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="type">Tipo de evento</label>
+                <input type="text" id="type" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Descripción</label>
+                <textarea id="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="author">Autor</label>
+                <input type="text" id="author" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Ubicación</label>
+                <input type="text" id="location" required>
+            </div>
+            <div class="form-group">
+                <label for="photo">URL de la foto</label>
+                <input type="text" id="photo" required>
+            </div>
+            <div class="form-group">
+                <label for="capacity">Capacidad</label>
+                <input type="number" id="capacity" required>
+            </div>
+            <div class="form-group">
+                <label for="duration">Duración</label>
+                <input type="text" id="duration" required>
+            </div>
             
+            <h3>Horarios</h3>
             <div id="schedules">
                 <div class="schedule-container">
-                    <input type="time" class="schedule-time" required>
+                    <label for="schedule-time-1">Horario 1</label>
+                    <input type="time" id="schedule-time-1" class="schedule-time" required>
                 </div>
             </div>
             
