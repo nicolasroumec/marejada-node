@@ -1,7 +1,7 @@
-const pool = require('../db'); // Asegúrate de tener configurada la conexión con PostgreSQL
+import pool from '../config/database.js'; // Asegúrate de tener configurada la conexión con PostgreSQL
 
 // Controlador para inscribir a un usuario en un evento
-exports.inscribeUser = async (req, res) => {
+export const inscribeUser = async (req, res) => {
     const { userId, scheduleId } = req.body;
 
     try {
@@ -29,7 +29,7 @@ exports.inscribeUser = async (req, res) => {
 };
 
 // Controlador para obtener todas las inscripciones de un usuario
-exports.getUserInscriptions = async (req, res) => {
+export const getUserInscriptions = async (req, res) => {
     const userId = req.params.id;
 
     try {

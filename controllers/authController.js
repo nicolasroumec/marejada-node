@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { createInscription } from '../models/Inscription.js';
 
 const authController = {
   async register(req, res) {
@@ -96,6 +97,27 @@ const authController = {
     } catch (error) {
       console.error('Error en login:', error);
       res.status(500).json({ message: 'Error en el login' });
+    }
+  },
+
+  async enroll(req, res) {
+    try {
+      const { id_schedules } = req.body; // Suponiendo que estás pasando el ID del evento
+      const id_users = req.user.userId; // Obtén el userId del token
+
+      // Inserción en la tabla inscriptions
+      const inscription = await createInscription({
+        id_users,
+        id_schedules,
+      });
+
+      res.status(201).json({
+        message: 'Inscripción exitosa',
+        inscription
+      });
+    } catch (error) {
+      console.error('Error al inscribirse:', error);
+      res.status(500).json({ message: 'Error al inscribirse' });
     }
   }
 };

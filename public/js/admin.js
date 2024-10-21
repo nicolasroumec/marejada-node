@@ -176,4 +176,30 @@ document.addEventListener('DOMContentLoaded', () => {
             schedules.removeChild(container);
         });
     });
+
+    document.getElementById('enrollButton').addEventListener('click', async () => {
+        const eventId = 1; // Cambia esto al ID del evento que deseas inscribir
+        const token = localStorage.getItem('token'); // Asegúrate de obtener el token desde donde lo guardas
+    
+        try {
+            const response = await fetch('/api/enroll', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ eventId })
+            });
+    
+            if (!response.ok) {
+                throw new Error('Error en la inscripción');
+            }
+    
+            const data = await response.json();
+            document.getElementById('message').textContent = data.message; // Muestra mensaje de éxito
+        } catch (error) {
+            console.error('Error al inscribirse:', error);
+            document.getElementById('message').textContent = 'Error al inscribirse. Por favor, intenta nuevamente.'; // Muestra mensaje de error
+        }
+    });
 });
