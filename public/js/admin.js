@@ -57,15 +57,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             }</p>
                             <p><strong>Autor:</strong> ${event.author}</p>
                             <p><strong>Ubicación:</strong> ${event.location}</p>
-<<<<<<< HEAD
-                            <p><strong>Foto:</strong> ${
-                              event.photo || "No disponible"
-                            }</p>
-=======
                             <p><strong>Foto:</strong> ${event.photo || 'No disponible'}</p>
                             <p><strong>Tipo:</strong> ${event.type}</p>
                             <p><strong>Duración:</strong> ${event.duration}</p>
->>>>>>> 3e277e3c1c82e3a9eaf985f7ad2285b0d4fcd478
                             <p><strong>Horarios:</strong></p>
                             <ul>
                                 ${schedulesHtml}
@@ -109,9 +103,6 @@ document.addEventListener("DOMContentLoaded", () => {
           const eventId = this.getAttribute("data-id");
           deleteEvent(eventId);
         }
-<<<<<<< HEAD
-      });
-=======
         
         const schedulesList = Array.from(scheduleInputs).map(container => ({
             startTime: container.querySelector('.schedule-time').value,
@@ -161,9 +152,8 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error('Error:', error);
             alert('Error al crear el evento');
         });
->>>>>>> 3e277e3c1c82e3a9eaf985f7ad2285b0d4fcd478
     });
-  }
+  },
 
   function deleteEvent(eventId) {
     fetch(`/admin/events/${eventId}`, { method: "DELETE" })
@@ -173,7 +163,8 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchEvents();
       })
       .catch((error) => console.error("Error:", error));
-  }
+    
+    },
 
   eventForm.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -234,7 +225,10 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Error:", error);
         alert("Error al crear el evento");
       });
-  });
+  
+      
+  }));
+
 
   addScheduleBtn.addEventListener("click", function () {
     const container = document.createElement("div");
@@ -251,4 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
         schedules.removeChild(container);
       });
   });
+  }
 });
+
+

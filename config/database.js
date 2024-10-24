@@ -5,7 +5,7 @@ dotenv.config();
 
 const { Pool } = pg;
 
-const pool = new Pool({ //Agarro la info del archivo .env
+const pool = new Pool({  //Agarro la info del archivo .env
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
