@@ -1,51 +1,83 @@
-const pool = require('../db'); // Asegúrate de tener configurada la conexión con PostgreSQL
+import Inscription from '../models/Inscription.js';
 
-// Controlador para inscribir a un usuario en un evento
-exports.inscribeUser = async (req, res) => {
-    const { userId, scheduleId } = req.body;
+const inscriptionController = {
+    async create(req, res) {
+        try {
+            const { scheduleId } = req.body;
+            const userId = req.user.userId; // Obtenido del middleware de autenticación
 
-    try {
-        // Verifica si el usuario ya está inscrito
-        const checkInscription = await pool.query(
-            'SELECT * FROM inscriptions WHERE id_users = $1 AND id_schedules = $2',
-            [userId, scheduleId]
-        );
+            const inscription = await Inscription.create({
+                userId,
+                scheduleId
+            });
 
-        if (checkInscription.rows.length > 0) {
-            return res.status(400).json({ message: 'Ya estás inscrito en este evento.' });
-        };
+            res.status(201).json({
+                message: 'Inscripción realizada exitosamente',
+                inscription
+            });
+        } catch (error) {
+            console.error('Error al crear inscripción:', error);
+            
+            if (error.message === 'No hay cupos disponibles' || 
+                error.message === 'Usuario ya inscrito en este horario' ||
+                error.message === 'Horario no encontrado') {
+                return res.status(400).json({ message: error.message });
+            }
 
-        // Inserta la inscripción en la base de datos
-        const newInscription = await pool.query(
-            'INSERT INTO inscriptions (id_users, id_schedules) VALUES ($1, $2) RETURNING *',
-            [userId, scheduleId]
-        );
-
-        return res.status(201).json({ message: 'Inscripción exitosa', inscription: newInscription.rows[0] });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Error al inscribir al usuario' });
-    }
-};
-
-// Controlador para obtener todas las inscripciones de un usuario
-exports.getUserInscriptions = async (req, res) => {
-    const userId = req.params.id;
-
-    try {
-        // Obtiene todas las inscripciones de un usuario
-        const inscriptions = await pool.query(
-            'SELECT * FROM inscriptions WHERE id_users = $1',
-            [userId]
-        );
-
-        if (inscriptions.rows.length === 0) {
-            return res.status(404).json({ message: 'No tienes inscripciones.' });
+            res.status(500).json({ message: 'Error al procesar la inscripción' });
         }
+    },
 
-        return res.status(200).json(inscriptions.rows);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Error al obtener las inscripciones' });
+    async getUserInscriptions(req, res) {
+        try {
+            const userId = req.user.userId;
+            const inscriptions = await Inscription.getByUserId(userId);
+
+            res.json({
+                message: 'Inscripciones recuperadas exitosamente',
+                inscriptions
+            });
+        } catch (error) {
+            console.error('Error al obtener inscripciones:', error);
+            res.status(500).json({ message: 'Error al obtener las inscripciones' });
+        }
+    },
+
+    async getScheduleInscriptions(req, res) {
+        try {
+            const { scheduleId } = req.params;
+            const inscriptions = await Inscription.getByScheduleId(scheduleId);
+
+            res.json({
+                message: 'Participantes recuperados exitosamente',
+                inscriptions
+            });
+        } catch (error) {
+            console.error('Error al obtener participantes:', error);
+            res.status(500).json({ message: 'Error al obtener los participantes' });
+        }
+    },
+
+    async cancelInscription(req, res) {
+        try {
+            const { scheduleId } = req.params;
+            const userId = req.user.userId;
+
+            await Inscription.delete(userId, scheduleId);
+
+            res.json({
+                message: 'Inscripción cancelada exitosamente'
+            });
+        } catch (error) {
+            console.error('Error al cancelar inscripción:', error);
+            
+            if (error.message === 'Inscripción no encontrada') {
+                return res.status(404).json({ message: error.message });
+            }
+
+            res.status(500).json({ message: 'Error al cancelar la inscripción' });
+        }
     }
 };
+
+export default inscriptionController;

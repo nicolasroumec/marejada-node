@@ -1,12 +1,21 @@
-import express from "express";
+import express from 'express';
+import inscriptionController from '../controllers/inscriptionController.js';
+import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
-const inscriptionController = require("../controllers/inscriptionController");
 
-// Ruta para inscribirse en un evento
-router.post("/inscribe", inscriptionController.inscribeUser);
+router.use(authMiddleware);
 
-// Ruta para obtener todas las inscripciones de un usuario
-router.get("/user/:id/inscriptions", inscriptionController.getUserInscriptions);
+// CREA NUEVA INSCRIPCION
+router.post('/', inscriptionController.create);
+
+// TRAE LAS INSCRIPCIONES DEL USUARIO AUTENTICADO
+router.get('/my-inscriptions', inscriptionController.getUserInscriptions);
+
+// TRAE TODOS LOS INSCRIPTOS DE UN SCHEDULE
+router.get('/schedule/:scheduleId', inscriptionController.getScheduleInscriptions);
+
+// CANCELA INSCRIPCION DEL USUARIO AUTENTICADO
+router.delete('/schedule/:scheduleId', inscriptionController.cancelInscription);
 
 export default router;

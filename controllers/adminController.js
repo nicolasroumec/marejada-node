@@ -3,15 +3,15 @@ import { createSchedule } from '../models/Schedule.js';
 
 export const createEventWithSchedules = async (req, res) => {
     try {
-        const { name, description, author, location, photo, schedules, capacity } = req.body;
+        const { name, description, author, location, photo, schedules, capacity, type, duration } = req.body;
 
         // Validación básica de los datos requeridos
-        if (!name || !description || !author || !location || !schedules || !capacity) {
+        if (!name || !description || !author || !location || !schedules || !capacity || !type || !duration) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
         // Crear el evento
-        const event = await createEvent({ name, description, author, location, photo });
+        const event = await createEvent({ name, description, author, location, photo, type, duration });
 
         // Crear los horarios asociados al evento
         for (let schedule of schedules) {
@@ -60,4 +60,3 @@ export const getAllEvents = async (req, res) => {
         res.status(500).json({ message: 'Error fetching events', error: error.message });
     }
 };
-

@@ -57,9 +57,15 @@ document.addEventListener("DOMContentLoaded", () => {
                             }</p>
                             <p><strong>Autor:</strong> ${event.author}</p>
                             <p><strong>Ubicación:</strong> ${event.location}</p>
+<<<<<<< HEAD
                             <p><strong>Foto:</strong> ${
                               event.photo || "No disponible"
                             }</p>
+=======
+                            <p><strong>Foto:</strong> ${event.photo || 'No disponible'}</p>
+                            <p><strong>Tipo:</strong> ${event.type}</p>
+                            <p><strong>Duración:</strong> ${event.duration}</p>
+>>>>>>> 3e277e3c1c82e3a9eaf985f7ad2285b0d4fcd478
                             <p><strong>Horarios:</strong></p>
                             <ul>
                                 ${schedulesHtml}
@@ -103,7 +109,59 @@ document.addEventListener("DOMContentLoaded", () => {
           const eventId = this.getAttribute("data-id");
           deleteEvent(eventId);
         }
+<<<<<<< HEAD
       });
+=======
+        
+        const schedulesList = Array.from(scheduleInputs).map(container => ({
+            startTime: container.querySelector('.schedule-time').value,
+            capacity: capacity
+        }));
+
+        if (schedulesList.length === 0) {
+            alert('Debe agregar al menos un horario');
+            return;
+        }
+
+        const formData = {
+            name: document.getElementById('name').value,
+            description: document.getElementById('description').value,
+            author: document.getElementById('author').value,
+            location: document.getElementById('location').value,
+            photo: document.getElementById('photo').value,
+            type: document.getElementById('type').value,
+            duration: document.getElementById('duration').value,
+            schedules: schedulesList,
+            capacity: capacity
+        };
+
+        fetch('/admin/events', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            alert('Evento creado exitosamente');
+            eventForm.reset();
+            
+            const scheduleContainers = document.querySelectorAll('.schedule-container');
+            scheduleContainers.forEach((container, index) => {
+                if (index > 0) { 
+                    container.remove();
+                }
+            });
+            fetchEvents();
+            modal.style.display = 'block'; 
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            alert('Error al crear el evento');
+        });
+>>>>>>> 3e277e3c1c82e3a9eaf985f7ad2285b0d4fcd478
     });
   }
 
