@@ -1,104 +1,108 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Marejada</title>
-    <link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
     <nav class="navbar">
-        <div class="navbar-brand">
-            Marejada
-        </div>
-        
-        <div class="navbar-links no-auth-only">
-            <button id="loginBtn">Iniciar Sesión</button>
-            <button id="registerBtn">Registrarse</button>
-        </div>
+      <div class="navbar-brand">Marejada</div>
 
-        <div class="navbar-links auth-only">
-            <span id="userFullName"></span>
-            <button id="logoutBtn">Cerrar Sesión</button>
+      <div class="navbar-links no-auth-only">
+        <button id="loginBtn">Iniciar Sesión</button>
+        <button id="registerBtn">Registrarse</button>
+      </div>
+
+      <div class="navbar-links auth-only">
+        <button id="userFullName"></button>
+        <!--Boton con nombre de usuario-->
+        <div id="dropdownMenu">
+          <a href="#opcion1">Opción 1</a>
+          <a href="#opcion2">Opción 2</a>
+          <a href="#opcion3">Opción 3</a>
         </div>
+        <button id="logoutBtn">Cerrar Sesión</button>
+      </div>
     </nav>
 
     <!-- Modal de Login -->
     <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Iniciar Sesión</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail">Email:</label>
-                    <input type="email" id="loginEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword">Contraseña:</label>
-                    <input type="password" id="loginPassword" required>
-                </div>
-                <button type="submit">Iniciar Sesión</button>
-            </form>
-        </div>
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Iniciar Sesión</h2>
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="loginEmail">Email:</label>
+            <input type="email" id="loginEmail" required />
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Contraseña:</label>
+            <input type="password" id="loginPassword" required />
+          </div>
+          <button type="submit">Iniciar Sesión</button>
+        </form>
+      </div>
     </div>
 
     <!-- Modal de Registro -->
     <div id="registerModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Registrarse</h2>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="firstName">Nombre:</label>
-                    <input type="text" id="firstName" required>
-                </div>
-                <div class="form-group">
-                    <label for="lastName">Apellido:</label>
-                    <input type="text" id="lastName" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Contraseña:</label>
-                    <input type="password" id="password" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirmPassword">Confirmar Contraseña:</label>
-                    <input type="password" id="confirmPassword" required>
-                </div>
-                <div class="form-group">
-                    <label for="school">Escuela:</label>
-                    <input type="text" id="school" required>
-                </div>
-                <div class="form-group">
-                    <label for="year">Año:</label>
-                    <select id="year" required>
-                        <option value="">Seleccione el año</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="course">Curso:</label>
-                    <select id="course" required>
-                        <option value="">Seleccione el curso</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
-                    </select>
-                </div>
-                <button type="submit">Registrarse</button>
-            </form>
-        </div>
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Registrarse</h2>
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="firstName">Nombre:</label>
+            <input type="text" id="firstName" required />
+          </div>
+          <div class="form-group">
+            <label for="lastName">Apellido:</label>
+            <input type="text" id="lastName" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" required />
+          </div>
+          <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" required />
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirmar Contraseña:</label>
+            <input type="password" id="confirmPassword" required />
+          </div>
+          <div class="form-group">
+            <label for="school">Escuela:</label>
+            <input type="text" id="school" required />
+          </div>
+          <div class="form-group">
+            <label for="year">Año:</label>
+            <select id="year" required>
+              <option value="">Seleccione el año</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="course">Curso:</label>
+            <select id="course" required>
+              <option value="">Seleccione el curso</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+            </select>
+          </div>
+          <button type="submit">Registrarse</button>
+        </form>
+      </div>
     </div>
 
     <script src="js/script.js"></script>
-</body>
+  </body>
 </html>

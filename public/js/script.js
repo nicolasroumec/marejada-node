@@ -86,6 +86,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    //Abrir lista de opciones al hacer click en botón de usuario
+    document.getElementById("userFullName").addEventListener("click", () => {
+        const dropdown = document.getElementById("dropdownMenu");
+        //alternamos entre mostrarlo y no mostrarlo
+        if (dropdown.style.display === 'none' || dropdown.style.display === ""){
+            dropdown.style.display = "block";
+        } 
+        else
+        {
+            dropdown.style.display = "none";
+        }
+        
+    })
+    
+    window.addEventListener("click", function(event) {
+        const dropdown = document.getElementById("dropdownMenu");
+        if (!event.target.matches('#userFullName')) {
+            dropdown.style.display = "none";
+        }
+    });
+
     // Cerrar modal al hacer clic fuera
     window.onclick = function(event) {
         if (event.target.className === "modal") {
