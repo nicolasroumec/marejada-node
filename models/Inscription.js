@@ -11,37 +11,42 @@ class Inscription {
                 WHERE s.id = $1
                 GROUP BY s.capacity
             `, [scheduleId]);
-
+    
             if (capacityCheck.rows.length === 0) {
                 throw new Error('Horario no encontrado');
             }
-
+    
             const { capacity, current_inscriptions } = capacityCheck.rows[0];
+            
+            // Comparar la cantidad de inscripciones actuales con la capacidad
             if (parseInt(current_inscriptions) >= capacity) {
                 throw new Error('No hay cupos disponibles');
             }
-
+    
+            // Verificar si el usuario ya está inscrito en este horario
             const existingInscription = await pool.query(
                 'SELECT id FROM inscriptions WHERE user_id = $1 AND schedule_id = $2',
                 [userId, scheduleId]
             );
-
+    
             if (existingInscription.rows.length > 0) {
                 throw new Error('Usuario ya inscrito en este horario');
             }
-
+    
+            // Si hay cupo y el usuario no está inscrito, agregar inscripción
             const result = await pool.query(
                 `INSERT INTO inscriptions (user_id, schedule_id)
                  VALUES ($1, $2)
                  RETURNING *`,
                 [userId, scheduleId]
             );
-
-            return result.rows[0];
+    
+            return result.rows[0]; 
         } catch (error) {
-            throw error;
+            throw error; 
         }
     }
+    
 
     static async getByUserId(userId) {
         try {
