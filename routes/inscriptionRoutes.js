@@ -19,6 +19,6 @@ router.get('/schedule/:scheduleId', inscriptionController.getScheduleInscription
 router.delete('/schedule/:scheduleId', inscriptionController.cancelInscription);
 
 // TRAE LA CANTIDAD DE CUPOS DISPONIBLES PARA UN SCHEDULE
-router.get('/schedule/:scheduleId/available-spots')
+router.get('/schedule/:scheduleId/available-spots', inscriptionController.getAvailableSpots)
 
 export default router;
