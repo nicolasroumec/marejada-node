@@ -77,6 +77,16 @@ const inscriptionController = {
 
             res.status(500).json({ message: 'Error al cancelar la inscripción' });
         }
+    },
+
+    async getAvailableSpots(req, res)  {
+        const { scheduleId } = req.params;
+        try {
+            const availableSpots = await Inscription.getAvailableSpots(scheduleId);
+            res.json({ availableSpots }); 
+        } catch (error) {
+            res.status(500).json({ message: "Error al traer la cantidad de inscriptos" });
+        }
     }
 };
 
