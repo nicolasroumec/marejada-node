@@ -4,53 +4,50 @@ class Inscription {
     static async create({ userId, scheduleId }) {
         try {
             // Verificar si hay cupo disponible
-            const capacityCheck = await pool.query(`
+            const [capacityCheck] = await pool.query(`
                 SELECT s.capacity, COUNT(i.id) as current_inscriptions
                 FROM schedules s
                 LEFT JOIN inscriptions i ON s.id = i.schedule_id
-                WHERE s.id = $1
+                WHERE s.id = ?
                 GROUP BY s.capacity
             `, [scheduleId]);
-    
-            if (capacityCheck.rows.length === 0) {
+
+            if (!capacityCheck) {
                 throw new Error('Horario no encontrado');
             }
-    
-            const { capacity, current_inscriptions } = capacityCheck.rows[0];
-            
+
+            const { capacity, current_inscriptions } = capacityCheck;
+
             // Comparar la cantidad de inscripciones actuales con la capacidad
             if (parseInt(current_inscriptions) >= capacity) {
                 throw new Error('No hay cupos disponibles');
             }
-    
+
             // Verificar si el usuario ya está inscrito en este horario
-            const existingInscription = await pool.query(
-                'SELECT id FROM inscriptions WHERE user_id = $1 AND schedule_id = $2',
+            const [existingInscription] = await pool.query(
+                'SELECT id FROM inscriptions WHERE user_id = ? AND schedule_id = ?',
                 [userId, scheduleId]
             );
-    
-            if (existingInscription.rows.length > 0) {
+
+            if (existingInscription) {
                 throw new Error('Usuario ya inscrito en este horario');
             }
-    
+
             // Si hay cupo y el usuario no está inscrito, agregar inscripción
-            const result = await pool.query(
-                `INSERT INTO inscriptions (user_id, schedule_id)
-                 VALUES ($1, $2)
-                 RETURNING *`,
+            const [result] = await pool.query(
+                'INSERT INTO inscriptions (user_id, schedule_id) VALUES (?, ?) RETURNING *',
                 [userId, scheduleId]
             );
-    
-            return result.rows[0]; 
+
+            return result;
         } catch (error) {
-            throw error; 
+            throw error;
         }
     }
-    
 
     static async getByUserId(userId) {
         try {
-            const result = await pool.query(`
+            const [inscriptions] = await pool.query(`
                 SELECT 
                     i.id as inscription_id,
                     e.id as event_id,
@@ -64,10 +61,10 @@ class Inscription {
                 FROM inscriptions i
                 JOIN schedules s ON i.schedule_id = s.id
                 JOIN events e ON s.event_id = e.id
-                WHERE i.user_id = $1
+                WHERE i.user_id = ?
             `, [userId]);
 
-            return result.rows;
+            return inscriptions;
         } catch (error) {
             throw error;
         }
@@ -75,7 +72,7 @@ class Inscription {
 
     static async getByScheduleId(scheduleId) {
         try {
-            const result = await pool.query(`
+            const [inscriptions] = await pool.query(`
                 SELECT 
                     i.id as inscription_id,
                     u.id as user_id,
@@ -84,10 +81,10 @@ class Inscription {
                     u.email
                 FROM inscriptions i
                 JOIN users u ON i.user_id = u.id
-                WHERE i.schedule_id = $1
+                WHERE i.schedule_id = ?
             `, [scheduleId]);
 
-            return result.rows;
+            return inscriptions;
         } catch (error) {
             throw error;
         }
@@ -95,16 +92,16 @@ class Inscription {
 
     static async delete(userId, scheduleId) {
         try {
-            const result = await pool.query(
-                'DELETE FROM inscriptions WHERE user_id = $1 AND schedule_id = $2 RETURNING *',
+            const [result] = await pool.query(
+                'DELETE FROM inscriptions WHERE user_id = ? AND schedule_id = ? RETURNING *',
                 [userId, scheduleId]
             );
 
-            if (result.rows.length === 0) {
+            if (!result) {
                 throw new Error('Inscripción no encontrada');
             }
 
-            return result.rows[0];
+            return result;
         } catch (error) {
             throw error;
         }
@@ -112,19 +109,19 @@ class Inscription {
 
     static async getAvailableSpots(scheduleId) {
         try {
-            const result = await pool.query(`
+            const [result] = await pool.query(`
                 SELECT s.capacity - COUNT(i.id) AS available_spots
                 FROM schedules s
                 LEFT JOIN inscriptions i ON s.id = i.schedule_id
-                WHERE s.id = $1
+                WHERE s.id = ?
                 GROUP BY s.capacity
             `, [scheduleId]);
 
-            if (result.rows.length === 0) {
+            if (!result) {
                 throw new Error('Horario no encontrado');
             }
 
-            const { available_spots } = result.rows[0];
+            const { available_spots } = result;
             return parseInt(available_spots);
         } catch (error) {
             throw error;

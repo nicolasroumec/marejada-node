@@ -1,41 +1,60 @@
 import pool from '../config/database.js';
 
 export const createEvent = async ({ name, description, author, location, photo, type, duration }) => {
-    const query = `
-        INSERT INTO events (name, description, author, location, photo, type, duration)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING *;
-    `;
-    const values = [name, description, author, location, photo, type, duration];
-    const result = await pool.query(query, values);
-    return result.rows[0];
+    try {
+        const [result] = await pool.query(
+            'INSERT INTO events (name, description, author, location, photo, type, duration) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [name, description, author, location, photo, type, duration]
+        );
+        return {
+            id: result.insertId,
+            name,
+            description,
+            author,
+            location,
+            photo,
+            type,
+            duration
+        };
+    } catch (error) {
+        throw error;
+    }
 };
 
 export const deleteEvent = async (eventId) => {
-    await pool.query('DELETE FROM schedules WHERE event_id = $1', [eventId]);
-    await pool.query('DELETE FROM events WHERE id = $1', [eventId]);
+    try {
+        await pool.query('DELETE FROM schedules WHERE event_id = ?', [eventId]);
+        await pool.query('DELETE FROM events WHERE id = ?', [eventId]);
+    } catch (error) {
+        throw error;
+    }
 };
 
 export const listEvents = async () => {
-    const query = `
-        SELECT 
-            e.*,
-            json_agg(
-                json_build_object(
-                    'id', s.id,
-                    'start_time', s.start_time,
-                    'capacity', s.capacity
-                )
-            ) as schedules
-        FROM events e
-        LEFT JOIN schedules s ON e.id = s.event_id
-        GROUP BY e.id
-    `;
-    const result = await pool.query(query);
-    
-    // Transformar null en array vacío cuando no hay horarios
-    return result.rows.map(event => ({
-        ...event,
-        schedules: event.schedules[0] === null ? [] : event.schedules
-    }));
+    try {
+        const [events] = await pool.query(`
+            SELECT 
+                e.*,
+                (
+                    SELECT JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            'id', s.id,
+                            'start_time', s.start_time,
+                            'capacity', s.capacity
+                        )
+                    )
+                    FROM schedules s
+                    WHERE s.event_id = e.id
+                ) as schedules
+            FROM events e
+        `);
+        
+        // Transformar null en array vacío cuando no hay horarios
+        return events.map(event => ({
+            ...event,
+            schedules: event.schedules === null ? [] : JSON.parse(event.schedules)
+        }));
+    } catch (error) {
+        throw error;
+    }
 };
