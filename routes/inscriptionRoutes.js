@@ -18,4 +18,6 @@ router.get('/schedule/:scheduleId', inscriptionController.getScheduleInscription
 // CANCELA INSCRIPCION DEL USUARIO AUTENTICADO
 router.delete('/schedule/:scheduleId', inscriptionController.cancelInscription);
 
+// TRAE LA CANTIDAD DE CUPOS DISPONIBLES PARA ESE SCHEDULE
+router.get('/schedule/:scheduleId/available-spots', inscriptionController.getAvailableSpots);
 export default router;
