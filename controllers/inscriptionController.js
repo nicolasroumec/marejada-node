@@ -79,13 +79,24 @@ const inscriptionController = {
         }
     },
 
-    async getAvailableSpots(req, res)  {
-        const { scheduleId } = req.params;
+    async getAvailableSpots(req, res) {
         try {
+            const { scheduleId } = req.params;
+
             const availableSpots = await Inscription.getAvailableSpots(scheduleId);
-            res.json({ availableSpots }); 
+
+            res.json({
+                message: 'Cupos disponibles obtenidos exitosamente',
+                availableSpots
+            });
         } catch (error) {
-            res.status(500).json({ message: "Error al traer la cantidad de inscriptos" });
+            console.error('Error al obtener cupos disponibles:', error);
+
+            if (error.message === 'Horario no encontrado') {
+                return res.status(404).json({ message: error.message });
+            }
+
+            res.status(500).json({ message: 'Error al obtener los cupos disponibles' });
         }
     }
 };

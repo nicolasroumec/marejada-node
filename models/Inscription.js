@@ -113,17 +113,17 @@ class Inscription {
     static async getAvailableSpots(scheduleId) {
         try {
             const result = await pool.query(`
-            SELECT s.capacity - COALESCE(COUNT(i.id), 0) AS available_spots
-            FROM schedules s
-            LEFT JOIN inscriptions i ON s.id = i.schedule_id
-            WHERE s.id = $1
-            GROUP BY s.capacity;
+                SELECT s.capacity - COUNT(i.id) AS available_spots
+                FROM schedules s
+                LEFT JOIN inscriptions i ON s.id = i.schedule_id
+                WHERE s.id = $1
+                GROUP BY s.capacity
             `, [scheduleId]);
-    
+
             if (result.rows.length === 0) {
                 throw new Error('Horario no encontrado');
             }
-    
+
             const { available_spots } = result.rows[0];
             return parseInt(available_spots);
         } catch (error) {
