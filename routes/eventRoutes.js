@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createEventWithSchedules, deleteEventById, getAllEvents } from '../controllers/adminController.js'; // Asegúrate que la ruta es correcta
+import { createEventWithSchedules, deleteEventById, getAllEvents } from '../controllers/eventController.js'; // Asegúrate que la ruta es correcta
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);

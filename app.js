@@ -3,8 +3,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
+import eventRoutes from './routes/eventRoutes.js';
 import inscriptionRoutes from './routes/inscriptionRoutes.js';
+import scheduleRoutes from './routes/scheduleRoutes.js';  // Nueva importación
 
 dotenv.config();
 
@@ -21,7 +22,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Rutas de la API
 app.use('/api/auth', authRoutes);
 app.use('/api/inscriptions', inscriptionRoutes);
-app.use('/admin', adminRoutes);
+app.use('/event', eventRoutes);
+app.use('/api/schedules', scheduleRoutes);  // Nueva ruta para schedules
 
 // Ruta raíz
 app.get('/', (req, res) => {
