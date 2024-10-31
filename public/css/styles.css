@@ -1,173 +1,338 @@
+/*Fonts imports*/
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Creepster&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Carrois+Gothic&display=swap");
+
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
+/**/
+
+#carouselExampleAutoplaying .carousel-inner {
+  height: 700px;
+  max-height: 100%;
+}
+
+#carouselExampleAutoplaying .carousel-inner img {
+  align-content: center;
+  position: relative;
+  bottom: 200px;
+  height: 50%;
+}
+
+.banner-title-group {
+  position: relative;
+  z-index: 9;
+  top: 250px;
+  color: #d6d4d4;
+}
+.banner-title-group h1 {
+  font-size: 110px;
+  font-weight: 1300;
+  position: relative;
+  text-align: center;
+  text-shadow: 0 0 3px #1c1849, 0 0 5px #0404e4;
+}
+.banner-title-group h3 {
+  text-align: center;
+  font-size: 25px;
+  position: relative;
+  text-shadow: 0 0 3px #1c1849, 0 0 5px #0404e4;
+}
+
+/**/
+
 .navbar {
-    background-color: #333;
-    color: white;
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  background-color: #333;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .navbar-brand {
-    font-size: 1.5rem;
-    font-weight: bold;
+  font-size: 30px;
+  font-weight: bold;
+  /*Fuente de letra custom para mejor mockup*/
+  font-family: "Creepster", system-ui;
+  font-size: 32px;
+  color: #5ba7ff;
+  /*jugar con opacity cuando se llegue a las card*/
 }
 
 .navbar-links {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .navbar-links button {
-    background: none;
-    border: 1px solid white;
-    color: white;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+  background: none;
+  border: 1px solid white;
+  color: white;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
 }
 
 .navbar-links button:hover {
-    background-color: white;
-    color: #333;
+  background-color: white;
+  color: #333;
 }
 
 #userFullName {
-    margin-right: 1rem;
-    font-weight: 500;
+  margin-right: 1rem;
+  font-weight: 500;
 }
 
 .modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.4);
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 99999; /*El z index modifica que tan arriba estan ciertos elementos respecto a otros; es como si fueran distintas capas*/
 }
 
 .modal-content {
-    background-color: #fefefe;
-    margin: 15% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    border-radius: 8px;
-    width: 80%;
-    max-width: 500px;
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 500px;
 }
 
 .close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 .close:hover,
 .close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 form label {
-    font-weight: 500;
-    color: #333;
+  font-weight: 500;
+  color: #333;
 }
 
 form input,
 form select {
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
 }
 
 form input:focus,
 form select:focus {
-    outline: none;
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
 
 form button {
-    padding: 0.75rem;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    transition: background-color 0.3s ease;
+  padding: 0.75rem;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
 }
 
 form button:hover {
-    background-color: #45a049;
+  background-color: #45a049;
 }
 
 /* Utilidades para autenticación */
 .auth-only {
-    display: none;
+  display: none;
 }
 
 .no-auth-only {
-    display: block;
+  display: block;
 }
 
 /* Estilos para mensajes de error */
 .error-message {
-    color: #dc3545;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
 
 /* Estilos para mensajes de éxito */
 .success-message {
-    color: #28a745;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
+  color: #28a745;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
-
 
 /*Estilos para menu de opciones de usuario*/
 #dropdownMenu {
-    display: none; /* Oculto por defecto */
-    position: absolute;
-    background-color: #f1f1f1;
-    min-width: 160px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
+  display: none; /* Oculto por defecto */
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
 }
 
 #dropdownMenu a {
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
 }
 
-#dropdownMenu a:hover {background-color: #ddd;}
+#dropdownMenu a:hover {
+  background-color: #ddd;
+}
+
+.main-title-text {
+  font-family: "Creepster", system-ui;
+}
+
+.title-description {
+  font-family: "Creepster", system-ui;
+}
+
+.event-container {
+  margin-left: 50px;
+  margin-right: 50px;
+  display: flex;
+ 
+  
+}
+
+.card {
+
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px;
+  width: 300px;
+  max-width: 350px;
+  font-family: "DM Sans", sans-serif;
+  font-style: normal;
+  min-width: 200px;
+  height: 500px;
+  display: inline-block;
+  /**/
+}
+
+.card img {
+  opacity: 30%;
+  width: 100%; /* Adjust the width as needed */
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  opacity: 85%;
+  padding-bottom: 0;
+}
+
+.card .event-title {
+  font-family: Verdana, sans-serif;
+  margin-bottom: -5px;
+  font-weight: 500;
+  margin-bottom: 0.5px;
+}
+
+.teacher-name {
+  font-size: 10px;
+  margin-bottom: 1px;
+}
+
+.capacity-bar {
+  padding-top: 5px;
+  padding: 1px;
+  opacity: 99%;
+  margin-top: -15px;
+  background-color: rgb(121, 121, 121);
+  border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+  height: 35px;
+  justify-content: space-between;
+  gap: 9px;
+}
+
+.capacity-bar .capacity-legend {
+  font-size: 10px;
+  margin-left: 5px;
+  font-weight: bold;
+}
+
+.capacity-bar .classroom-legend{
+    font-size: 10px;
+    margin-left: 5px;
+    font-weight: bold;
+    position: relative;
+    bottom: 20px;
+    padding-bottom: 0;
+}
+
+.card-description .description-text {
+  padding: 5px;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.duration-schedule {
+  font-size: 12px;
+  color: #000000;
+  padding: 5px;
+  padding-bottom: 20px;
+}
+
+.button-space {
+  margin-left: 30px;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+
+  text-align: center;
+  margin: 5px;
+}
+
+.button-space button {
+  border-radius: 5px;
+  background-color: #c8c8c9;
+  opacity: 80%;
+  font-family: "Carrois Gothic", sans-serif;
+  font-weight: 200;
+  font-size: 14px;
+  font-style: normal;
+}
