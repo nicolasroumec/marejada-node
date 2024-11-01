@@ -8,7 +8,7 @@ class Inscription {
         
         try {
             await connection.beginTransaction();
-
+    
             // Verificar conflicto de horario
             const [timeConflict] = await connection.query(`
                 SELECT i.id 
@@ -18,66 +18,47 @@ class Inscription {
                 WHERE i.user_id = ? 
                 AND s1.start_time = s2.start_time
             `, [scheduleId, userId]);
-
+    
             if (timeConflict && timeConflict.length > 0) {
                 throw new Error('Ya estás inscrito en otro evento en este horario');
             }
-
+    
             // Verificar cupo disponible
-            const [capacityCheck] = await connection.query(`
-                SELECT s.capacity, COUNT(i.id) as current_inscriptions
+            const [capacityCheckResult] = await connection.query(`
+                SELECT s.capacity, COUNT(i.id) AS current_inscriptions
                 FROM schedules s
                 LEFT JOIN inscriptions i ON s.id = i.schedule_id
                 WHERE s.id = ?
                 GROUP BY s.capacity
             `, [scheduleId]);
-
-            if (!capacityCheck) {
+    
+            if (!capacityCheckResult || capacityCheckResult.length === 0) {
                 throw new Error('Horario no encontrado');
             }
-
-            const { capacity, current_inscriptions } = capacityCheck;
-
+    
+            // Acceder a los datos de capacidad y cantidad de inscripciones actuales
+            const { capacity, current_inscriptions } = capacityCheckResult[0];
+    
             if (parseInt(current_inscriptions) >= capacity) {
                 throw new Error('No hay cupos disponibles');
             }
-
+    
             // Crear inscripción
             const [result] = await connection.query(
                 'INSERT INTO inscriptions (user_id, schedule_id) VALUES (?, ?)',
                 [userId, scheduleId]
             );
-
-            // Intentar enviar email, pero no bloquear si falla
-            try {
-                // Obtener información para el email
-                const [eventInfo] = await connection.query(`
-                    SELECT e.name, e.location, s.start_time, u.email, u.first_name
-                    FROM schedules s
-                    JOIN events e ON s.event_id = e.id
-                    JOIN users u ON u.id = ?
-                    WHERE s.id = ?
-                `, [userId, scheduleId]);
-
-                if (eventInfo && eventInfo[0]) {
-                    await this.sendConfirmationEmail(eventInfo[0]).catch(error => {
-                        console.log('Error al enviar email, pero la inscripción continúa:', error);
-                    });
-                }
-            } catch (emailError) {
-                console.log('Error al preparar email, pero la inscripción continúa:', emailError);
-            }
-
+    
+            // Confirmar la transacción
             await connection.commit();
             return result;
-
         } catch (error) {
             await connection.rollback();
             throw error;
         } finally {
             connection.release();
         }
-    }
+    }    
 
     static async sendConfirmationEmail(info) {
         // Solo intentar enviar email si están configuradas las credenciales
