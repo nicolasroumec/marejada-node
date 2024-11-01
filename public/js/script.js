@@ -378,12 +378,21 @@ function initializeEventListeners() {
  * @param {Object} schedule - Datos del schedule
  * @returns {string} HTML de la card
  */
-// Modificar la función createEventCard para usar availableSpots
+
+// Modificar la función createEventCard para mostrar el estado correcto inicial ypara usar availableSpots
 function createEventCard(schedule) {
     const availableSpots = schedule.availableSpots ?? 
         (schedule.capacity - (schedule.currentInscriptions || 0));
     const isAvailable = availableSpots > 0;
     
+    // Verificar si el usuario está inscrito
+    const isInscribed = schedule.userInscribed;
+    
+    let buttonClass = isInscribed ? 'btn-success' : (isAvailable ? 'btn-danger' : 'btn-secondary');
+    let buttonText = isInscribed ? '<i class="fas fa-check me-2"></i>INSCRIPTO' : 
+                    (isAvailable ? 'INSCRIBIRSE' : 'AGOTADO');
+    let buttonDisabled = isInscribed || !isAvailable;
+
     return `
         <div class="col-12 col-md-6 col-lg-4" data-schedule-id="${schedule.scheduleId}">
             <div class="card bg-dark text-white h-100 border-secondary hover-border-danger">
@@ -420,10 +429,10 @@ function createEventCard(schedule) {
 
                     <button
                         onclick="handleInscription('${schedule.scheduleId}')"
-                        class="btn w-100 ${isAvailable ? 'btn-danger' : 'btn-secondary'}"
-                        ${!isAvailable ? 'disabled' : ''}
+                        class="btn w-100 ${buttonClass}"
+                        ${buttonDisabled ? 'disabled' : ''}
                     >
-                        ${isAvailable ? 'INSCRIBIRSE' : 'AGOTADO'}
+                        ${buttonText}
                     </button>
                 </div>
             </div>
@@ -498,7 +507,7 @@ async function handleInscription(scheduleId) {
             if (card) {
                 const spotsElement = card.querySelector('.available-spots small');
                 if (spotsElement) {
-                    const isAvailable = newSpots > 0; // Ahora isAvailable está definido correctamente
+                    const isAvailable = newSpots > 0;
                     spotsElement.innerHTML = `
                         <strong>Cupos disponibles:</strong> 
                         <span class="badge bg-${isAvailable ? 'success' : 'danger'}">
@@ -507,12 +516,12 @@ async function handleInscription(scheduleId) {
                     `;
                 }
 
-                // Actualizar el botón
+                // Actualizar el botón para mostrar estado de inscripción
                 const button = card.querySelector('button');
                 if (button) {
-                    button.className = `btn w-100 ${newSpots > 0 ? 'btn-danger' : 'btn-secondary'}`;
-                    button.disabled = newSpots <= 0;
-                    button.textContent = newSpots > 0 ? 'INSCRIBIRSE' : 'AGOTADO';
+                    button.className = 'btn w-100 btn-success'; // Cambia a verde para indicar inscripción exitosa
+                    button.disabled = true; // Deshabilita el botón
+                    button.innerHTML = '<i class="fas fa-check me-2"></i>INSCRIPTO'; // Agrega un ícono de check
                 }
             }
         } else {
@@ -521,6 +530,27 @@ async function handleInscription(scheduleId) {
     } catch (error) {
         console.error('Error en la inscripción:', error);
         showToast('Error al procesar la inscripción', 'error');
+    }
+}
+// Función auxiliar para verificar si el usuario está inscrito en un evento
+async function checkUserInscription(scheduleId) {
+    try {
+        const token = getAuthToken();
+        if (!token) return false;
+
+        const response = await fetch(`/api/inscriptions/check/${scheduleId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) return false;
+        
+        const data = await response.json();
+        return data.isInscribed;
+    } catch (error) {
+        console.error('Error al verificar inscripción:', error);
+        return false;
     }
 }
 
