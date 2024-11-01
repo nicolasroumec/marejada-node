@@ -469,6 +469,13 @@ async function handleInscription(scheduleId) {
             return;
         }
 
+        // Verificar cupos disponibles antes de intentar la inscripción
+        const availableSpots = await fetchAvailableSpots(scheduleId);
+        if (availableSpots === null || availableSpots <= 0) {
+            showToast('No hay cupos disponibles', 'warning');
+            return;
+        }
+
         const response = await fetch('/api/inscriptions', {
             method: 'POST',
             headers: {
@@ -491,7 +498,7 @@ async function handleInscription(scheduleId) {
             if (card) {
                 const spotsElement = card.querySelector('.available-spots small');
                 if (spotsElement) {
-                    const isAvailable = newSpots > 0;
+                    const isAvailable = newSpots > 0; // Ahora isAvailable está definido correctamente
                     spotsElement.innerHTML = `
                         <strong>Cupos disponibles:</strong> 
                         <span class="badge bg-${isAvailable ? 'success' : 'danger'}">
@@ -503,9 +510,9 @@ async function handleInscription(scheduleId) {
                 // Actualizar el botón
                 const button = card.querySelector('button');
                 if (button) {
-                    button.className = `btn w-100 ${isAvailable ? 'btn-danger' : 'btn-secondary'}`;
-                    button.disabled = !isAvailable;
-                    button.textContent = isAvailable ? 'INSCRIBIRSE' : 'AGOTADO';
+                    button.className = `btn w-100 ${newSpots > 0 ? 'btn-danger' : 'btn-secondary'}`;
+                    button.disabled = newSpots <= 0;
+                    button.textContent = newSpots > 0 ? 'INSCRIBIRSE' : 'AGOTADO';
                 }
             }
         } else {
