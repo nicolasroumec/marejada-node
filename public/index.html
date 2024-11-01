@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marejada</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tu CSS personalizado -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -22,6 +25,42 @@
             <button id="logoutBtn">Cerrar Sesión</button>
         </div>
     </nav>
+   
+   
+    <div class="container-fluid bg-dark py-5">
+        <!-- Filtros -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="bg-secondary p-3 rounded d-flex flex-wrap gap-3">
+                    <select id="timeFilter" class="form-select bg-dark text-white">
+                        <option value="all">Todos los horarios</option>
+                        <option value="today">Hoy</option>
+                        <option value="tomorrow">Mañana</option>
+                        <option value="week">Esta semana</option>
+                    </select>
+    
+                    <select id="typeFilter" class="form-select bg-dark text-white">
+                        <option value="all">Todos los tipos</option>
+                        <option value="terror">Terror</option>
+                        <option value="suspenso">Suspenso</option>
+                        <option value="paranormal">Paranormal</option>
+                    </select>
+    
+                    <select id="capacityFilter" class="form-select bg-dark text-white">
+                        <option value="all">Todos los cupos</option>
+                        <option value="available">Disponible</option>
+                        <option value="almostFull">Últimos cupos</option>
+                        <option value="full">Agotado</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Grid de cards -->
+        <div id="eventsGrid" class="row g-4">
+            <!-- Las cards se insertarán aquí dinámicamente -->
+        </div>
+    </div>
 
     <!-- Modal de Login -->
     <div id="loginModal" class="modal">
@@ -41,6 +80,8 @@
             </form>
         </div>
     </div>
+
+
 
     <!-- Modal de Registro -->
     <div id="registerModal" class="modal">
@@ -100,5 +141,17 @@
     </div>
 
     <script src="js/script.js"></script>
+    <!-- Scripts necesarios -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Tu componente EventCards -->
+    <!-- <script type="text/babel" src="js/components/EventCards.js"></script> -->
+    <!-- Tu script principal -->
+    <script type="text/babel">
+        // Renderizar el componente EventCards
+         ReactDOM.render(
+        <EventCards />,
+        document.getElementById('eventCardsContainer')
+     );
+    </script>
 </body>
 </html>

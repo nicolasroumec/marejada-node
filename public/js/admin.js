@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function fetchEvents() {
-        fetch('/admin/events')
+        fetch('/event/events')
             .then(response => response.json())
             .then(events => {
                 eventList.innerHTML = '';
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function deleteEvent(eventId) {
-        fetch(`/admin/events/${eventId}`, { method: 'DELETE' })
+        fetch(`/event/events/${eventId}`, { method: 'DELETE' })
             .then(response => response.json())
             .then(data => {
                 console.log(data.message);
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             capacity: capacity
         };
 
-        fetch('/admin/events', {
+        fetch('/event/events', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

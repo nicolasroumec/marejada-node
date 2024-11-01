@@ -1,3 +1,6 @@
+// #region Niqui
+
+
 // Todas las funcionalidades para tokens
 const TOKEN_KEY = 'token';
 const USER_KEY = 'user';
@@ -183,3 +186,198 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+
+// #endregion
+
+
+// #region Juan Cruz
+
+// Función para obtener los schedules del servidor
+async function fetchSchedules() {
+    try {
+        const response = await fetch('/api/schedules/schedule-cards');
+        const data = await response.json();
+        console.log(data)
+        return data;
+        
+    } catch (error) {
+        console.error('Error fetching schedules:', error);
+        return [];
+    }
+}
+
+// Función para crear una card de evento
+function createEventCard(schedule) {
+    const availableSpots = schedule.capacity - (schedule.currentInscriptions || 0);
+    const isAvailable = availableSpots > 0;
+    
+    return `
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card bg-dark text-white h-100 border-secondary hover-border-danger">
+                <div class="position-relative">
+                    <img 
+                        src="${schedule.event.photo || 'https://via.placeholder.com/400x300'}"
+                        class="card-img-top"
+                        alt="${schedule.event.name}"
+                        style="height: 200px; object-fit: cover;"
+                    >
+                    <div class="position-absolute top-0 end-0 bg-danger text-white px-3 py-1">
+                        ${new Date(schedule.startTime).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <h5 class="card-title text-danger">${schedule.event.name}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">${schedule.event.type}</h6>
+                    <p class="card-text">${schedule.event.description}</p>
+                    
+                    <div class="mb-3">
+                        <p class="mb-1"><small><strong>Autor:</strong> ${schedule.event.author}</small></p>
+                        <p class="mb-1"><small><strong>Ubicación:</strong> ${schedule.event.location}</small></p>
+                        <p class="mb-1"><small><strong>Duración:</strong> ${schedule.event.duration}</small></p>
+                        <p class="mb-1"><small><strong>Cupos disponibles:</strong> ${availableSpots}</small></p>
+                    </div>
+
+                    <button
+                        onclick="handleInscription('${schedule.scheduleId}')"
+                        class="btn w-100 ${isAvailable ? 'btn-danger' : 'btn-secondary'}"
+                        ${!isAvailable ? 'disabled' : ''}
+                    >
+                        ${isAvailable ? 'INSCRIBIRSE' : 'AGOTADO'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Función para manejar la inscripción
+async function handleInscription(scheduleId) {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Debe iniciar sesión para inscribirse');
+            return;
+        }
+
+        const response = await fetch('/api/inscriptions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ scheduleId })
+        });
+
+        if (response.ok) {
+            alert('Inscripción exitosa');
+            loadSchedules(); // Recargar los datos
+        } else {
+            const error = await response.json();
+            alert(error.message);
+        }
+    } catch (error) {
+        console.error('Error en la inscripción:', error);
+        alert('Error al procesar la inscripción');
+    }
+}
+
+// Función para filtrar schedules
+function filterSchedules(schedules, filters) {
+    return schedules.filter(schedule => {
+        // Filtro por horario
+        if (filters.timeRange !== 'all') {
+            const now = new Date();
+            const scheduleDate = new Date(schedule.startTime);
+            
+            switch (filters.timeRange) {
+                case 'today':
+                    if (scheduleDate.toDateString() !== now.toDateString()) return false;
+                    break;
+                case 'tomorrow':
+                    const tomorrow = new Date(now);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    if (scheduleDate.toDateString() !== tomorrow.toDateString()) return false;
+                    break;
+                case 'week':
+                    const nextWeek = new Date(now);
+                    nextWeek.setDate(nextWeek.getDate() + 7);
+                    if (scheduleDate < now || scheduleDate > nextWeek) return false;
+                    break;
+            }
+        }
+
+        // Filtro por tipo
+        if (filters.eventType !== 'all' && 
+            schedule.event.type.toLowerCase() !== filters.eventType.toLowerCase()) {
+            return false;
+        }
+
+        // Filtro por capacidad
+        const availableSpots = schedule.capacity - (schedule.currentInscriptions || 0);
+        if (filters.capacity !== 'all') {
+            switch (filters.capacity) {
+                case 'available':
+                    if (availableSpots <= 0) return false;
+                    break;
+                case 'almostFull':
+                    if (availableSpots > 5 || availableSpots <= 0) return false;
+                    break;
+                case 'full':
+                    if (availableSpots > 0) return false;
+                    break;
+            }
+        }
+
+        return true;
+    });
+}
+
+// Variables globales para almacenar los datos y filtros
+let allSchedules = [];
+const filters = {
+    timeRange: 'all',
+    eventType: 'all',
+    capacity: 'all'
+};
+
+// Función para cargar y mostrar los schedules
+async function loadSchedules() {
+    // Obtener los datos
+    allSchedules = await fetchSchedules();
+    
+    // Aplicar filtros y renderizar
+    const filteredSchedules = filterSchedules(allSchedules, filters);
+    const eventsGrid = document.getElementById('eventsGrid');
+    eventsGrid.innerHTML = filteredSchedules.map(createEventCard).join('');
+}
+
+// Inicializar los event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Cargar datos iniciales
+    loadSchedules();
+
+    // Event listeners para los filtros
+    document.getElementById('timeFilter').addEventListener('change', (e) => {
+        filters.timeRange = e.target.value;
+        loadSchedules();
+    });
+
+    document.getElementById('typeFilter').addEventListener('change', (e) => {
+        filters.eventType = e.target.value;
+        loadSchedules();
+    });
+
+    document.getElementById('capacityFilter').addEventListener('change', (e) => {
+        filters.capacity = e.target.value;
+        loadSchedules();
+    });
+});
+
+
+
+// #endregion
