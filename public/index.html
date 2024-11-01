@@ -16,40 +16,39 @@
         </div>
         
         <div class="navbar-links no-auth-only">
-            <button id="loginBtn">Iniciar Sesión</button>
-            <button id="registerBtn">Registrarse</button>
+            <button id="loginBtn" class="btn btn-primary">Iniciar Sesión</button>
+            <button id="registerBtn" class="btn btn-primary">Registrarse</button>
         </div>
 
         <div class="navbar-links auth-only">
-            <span id="userFullName"></span>
-            <button onclick="showUserInscriptions()" class="btn btn-outline-danger me-2">
+            <span id="userFullName" class="text-white me-3"></span>
+            <button onclick="showUserInscriptions()" class="btn btn-primary">
                 Mis Inscripciones
             </button>
-            <button id="logoutBtn" class="btn btn-danger">Cerrar Sesión</button>
+            <button id="logoutBtn" class="btn btn-primary">Cerrar Sesión</button>
         </div>
     </nav>
-   
    
     <div class="container-fluid bg-dark py-5">
         <!-- Filtros -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="bg-secondary p-3 rounded d-flex flex-wrap gap-3">
-                    <select id="timeFilter" class="form-select bg-dark text-white">
+                <div class="d-flex gap-3" style="background-color: var(--secondary-dark); padding: 1rem; border-radius: 8px;">
+                    <select id="timeFilter" class="form-select flex-1">
                         <option value="all">Todos los horarios</option>
                         <option value="today">Hoy</option>
                         <option value="tomorrow">Mañana</option>
                         <option value="week">Esta semana</option>
                     </select>
     
-                    <select id="typeFilter" class="form-select bg-dark text-white">
+                    <select id="typeFilter" class="form-select flex-1">
                         <option value="all">Todos los tipos</option>
                         <option value="terror">Terror</option>
                         <option value="suspenso">Suspenso</option>
                         <option value="paranormal">Paranormal</option>
                     </select>
     
-                    <select id="capacityFilter" class="form-select bg-dark text-white">
+                    <select id="capacityFilter" class="form-select flex-1">
                         <option value="all">Todos los cupos</option>
                         <option value="available">Disponible</option>
                         <option value="almostFull">Últimos cupos</option>
@@ -66,95 +65,99 @@
     </div>
 
     <!-- Modal de Login -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Iniciar Sesión</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail">Email:</label>
-                    <input type="email" id="loginEmail" required>
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Iniciar Sesión</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="form-group">
-                    <label for="loginPassword">Contraseña:</label>
-                    <input type="password" id="loginPassword" required>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+                        </div>
+                    </form>
                 </div>
-                <button type="submit">Iniciar Sesión</button>
-            </form>
+            </div>
         </div>
     </div>
-
-
 
     <!-- Modal de Registro -->
-    <div id="registerModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Registrarse</h2>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="firstName">Nombre:</label>
-                    <input type="text" id="firstName" required>
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrarse</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="form-group">
-                    <label for="lastName">Apellido:</label>
-                    <input type="text" id="lastName" required>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="firstName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lastName" class="form-label">Apellido</label>
+                            <input type="text" class="form-control" id="lastName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirmar Contraseña</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="school" class="form-label">Escuela</label>
+                            <input type="text" class="form-control" id="school" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="year" class="form-label">Año</label>
+                            <select class="form-select" id="year" required>
+                                <option value="">Seleccione el año</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="course" class="form-label">Curso</label>
+                            <select class="form-select" id="course" required>
+                                <option value="">Seleccione el curso</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary w-100">Registrarse</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Contraseña:</label>
-                    <input type="password" id="password" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirmPassword">Confirmar Contraseña:</label>
-                    <input type="password" id="confirmPassword" required>
-                </div>
-                <div class="form-group">
-                    <label for="school">Escuela:</label>
-                    <input type="text" id="school" required>
-                </div>
-                <div class="form-group">
-                    <label for="year">Año:</label>
-                    <select id="year" required>
-                        <option value="">Seleccione el año</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="course">Curso:</label>
-                    <select id="course" required>
-                        <option value="">Seleccione el curso</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
-                    </select>
-                </div>
-                <button type="submit">Registrarse</button>
-            </form>
+            </div>
         </div>
     </div>
 
-    <script src="js/script.js"></script>
     <!-- Scripts necesarios -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Tu componente EventCards -->
-    <!-- <script type="text/babel" src="js/components/EventCards.js"></script> -->
-    <!-- Tu script principal -->
-    <script type="text/babel">
-        // Renderizar el componente EventCards
-         ReactDOM.render(
-        <EventCards />,
-        document.getElementById('eventCardsContainer')
-     );
-    </script>
+    <script src="js/script.js"></script>
 </body>
 </html>
