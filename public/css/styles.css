@@ -36,7 +36,7 @@ body {
 
 /* Navbar mejorada */
 .navbar {
-    background-color: rgba(20, 11, 41, 0.95) !important; /* Violeta muy oscuro con transparencia */
+    background-color: rgba(20, 11, 41, 0.95) !important;
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.3);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
@@ -74,26 +74,53 @@ body {
     font-size: 1.2rem;
 }
 
-/* Cards */
+/* Cards mejoradas */
 .card {
-    background-color: var(--violet-dark);
-    border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+    background-color: rgba(20, 11, 41, 0.95);
+    border: 1px solid rgba(151, 71, 255, 0.2);
     transition: all 0.3s ease;
+    color: #ffffff;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 0 20px rgba(var(--bs-secondary-rgb), 0.3);
+    box-shadow: 0 0 20px rgba(151, 71, 255, 0.3);
     border-color: var(--violet-bright);
+    background-color: rgba(26, 15, 54, 0.98);
 }
 
 .card-title {
     color: var(--violet-bright) !important;
     font-weight: 600;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .card-subtitle {
-    color: var(--violet-light) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.card-text {
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin-bottom: 1rem;
+}
+
+.card .event-details {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.5rem;
+}
+
+.card .event-location,
+.card .event-time,
+.card .event-capacity {
+    color: var(--violet-light);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
 }
 
 /* Botones */
@@ -102,6 +129,7 @@ body {
     border-color: var(--bs-primary);
     color: #fff;
     transition: all 0.3s ease;
+    padding: 0.5rem 1.25rem;
 }
 
 .btn-primary:hover, .btn-danger:hover {
@@ -109,6 +137,22 @@ body {
     border-color: var(--violet-light);
     transform: translateY(-2px);
     box-shadow: 0 0 15px rgba(var(--bs-primary-rgb), 0.4);
+}
+
+.card .btn-cancel {
+    background-color: rgba(74, 27, 108, 0.9);
+    border-color: var(--violet-bright);
+    color: white;
+    transition: all 0.3s ease;
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 1rem;
+}
+
+.card .btn-cancel:hover {
+    background-color: var(--bs-danger);
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(74, 27, 108, 0.4);
 }
 
 .btn-secondary {
@@ -209,8 +253,20 @@ body {
         padding: 0.5rem 1rem;
     }
     
+    .card {
+        margin: 0.5rem;
+    }
+    
     .card:hover {
         transform: translateY(-3px);
+    }
+    
+    .card-title {
+        font-size: 1.1rem;
+    }
+    
+    .card-subtitle {
+        font-size: 1rem;
     }
 }
 
