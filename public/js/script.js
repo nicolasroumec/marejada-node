@@ -27,6 +27,91 @@ function showToast(message, type = 'success') {
 }
 // #endregion
 
+// #region Error Handling
+const ErrorTypes = {
+    AUTH: 'auth',
+    NETWORK: 'network',
+    VALIDATION: 'validation',
+    SERVER: 'server'
+};
+
+function handleError(error) {
+    console.error('Error:', error);
+    
+    if (error.status === 401) {
+        clearAuth();
+        handleNotAuthenticated();
+        showToast('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
+        return;
+    }
+    
+    if (!navigator.onLine) {
+        showToast('Error de conexión. Por favor, verifica tu internet.', 'error');
+        return;
+    }
+    
+    showToast(error.message || 'Ha ocurrido un error. Por favor, intenta nuevamente.', 'error');
+}
+
+// #endregion
+
+// #region Notifications
+const NotificationService = {
+    async sendEmailNotification(userId, eventData) {
+        try {
+            await ApiClient.request('/notifications/email', {
+                method: 'POST',
+                body: JSON.stringify({
+                    userId,
+                    eventData,
+                    type: 'inscription'
+                })
+            });
+        } catch (error) {
+            console.error('Error sending email notification:', error);
+            // No mostramos el error al usuario ya que es una funcionalidad secundaria
+        }
+    }
+};
+
+// #endregion
+
+// #region Export Service
+const ExportService = {
+    async exportInscriptions(format = 'pdf') {
+        try {
+            const response = await ApiClient.request('/inscriptions/export', {
+                method: 'POST',
+                body: JSON.stringify({ format })
+            });
+            
+            // Crear un link temporal para la descarga
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `inscripciones_${new Date().toISOString().split('T')[0]}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            // Enviar por email
+            await NotificationService.sendEmailNotification(getUserData().id, {
+                type: 'export',
+                format
+            });
+
+            showToast('Inscripciones exportadas exitosamente', 'success');
+        } catch (error) {
+            handleError(error);
+        }
+    }
+};
+
+
+// #endregion
+
 // #region Authentication and User Management
 const setAuthToken = (token) => localStorage.setItem(TOKEN_KEY, token);
 const getAuthToken = () => localStorage.getItem(TOKEN_KEY);
@@ -93,23 +178,14 @@ function handleNotAuthenticated() {
 // #endregion
 
 // #region API Calls
+
 /**
  * Obtiene los schedules desde el servidor
  * @returns {Promise<Array>} Array de schedules
  */
 async function fetchSchedules() {
     try {
-        const response = await fetch('/api/schedules/schedule-cards', { 
-            headers: {
-                'Authorization': `Bearer ${getAuthToken()}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await ApiClient.request('/schedules/schedule-cards');
         return data;
     } catch (error) {
         console.error('Error al obtener schedules:', error);
@@ -118,15 +194,14 @@ async function fetchSchedules() {
     }
 }
 
+
 /**
  * Actualiza la capacidad de un evento específico
  * @param {string} scheduleId - ID del schedule
  */
 async function updateEventCapacity(scheduleId) {
     try {
-        const response = await fetch(`/api/inscriptions/available-spots/${scheduleId}`);
-        const data = await response.json();
-        
+        const data = await ApiClient.request(`/inscriptions/available-spots/${scheduleId}`);
         const card = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
         if (card) {
             const spotsElement = card.querySelector('.available-spots');
@@ -136,10 +211,9 @@ async function updateEventCapacity(scheduleId) {
         }
     } catch (error) {
         console.error('Error al actualizar cupos:', error);
-        showToast('Error al actualizar cupos disponibles', 'error');
+        // No mostrar toast ya que es una actualización secundaria
     }
 }
-
 /**
  * Muestra un modal cuando el usuario no tiene inscripciones
  */
@@ -231,6 +305,128 @@ function createInscriptionsModalHTML(inscriptions) {
         </div>
     `;
 }
+// #endregion
+
+// #region API Client
+
+/** Beneficios principales del ApiClient:
+
+Centralización:
+
+    Todas las llamadas a la API pasan por un único punto
+    Facilita el mantenimiento y los cambios globales
+    Permite cambiar fácilmente la URL base de la API
+
+
+ Manejo automático de autenticación:
+
+    Añade automáticamente el token de autenticación
+    No hay que recordar incluir los headers de autorización en cada llamada
+
+
+ Manejo de errores estandarizado:
+
+    Todos los errores se manejan de forma consistente
+    Facilita el logging y el debugging
+    Maneja automáticamente errores de autenticación
+
+
+Configuración por defecto:
+
+    Headers comunes como 'Content-Type'
+    Formato de respuesta estándar
+    Transformación automática de JSON
+
+
+ Simplificación del código:
+        javascriptCopy// Sin ApiClient
+        const response = await fetch('/api/schedules', {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+        if (!response.ok) {
+        handleError(await response.json());
+        }
+        return await response.json();
+
+    Con ApiClient
+        
+        const data = await ApiClient.request('/schedules');
+
+Facilita el testing y los mocks:
+
+    Un único punto para interceptar llamadas en tests
+    Facilita la implementación de mocks para desarrollo
+
+
+ */
+
+    
+const ApiClient = {
+    baseUrl: '/api',
+    
+    async request(endpoint, options = {}) {
+        const token = getAuthToken();
+        const defaultOptions = {
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+        };
+        
+        try {
+            const response = await fetch(`${this.baseUrl}${endpoint}`, {
+                ...defaultOptions,
+                ...options,
+                headers: {
+                    ...defaultOptions.headers,
+                    ...options.headers
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw { 
+                    ...data, 
+                    status: response.status,
+                    statusText: response.statusText
+                };
+            }
+            
+            return data;
+        } catch (error) {
+            // No manejar el error aquí para permitir manejo específico en cada caso
+            throw error;
+        }
+    }
+};
+
+// Función para actualizar la UI después de una inscripción
+async function updateUIAfterInscription(scheduleId) {
+    try {
+        const card = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+        if (!card) return;
+
+        // Actualizar cupos disponibles
+        const availableSpots = await fetchAvailableSpots(scheduleId);
+        if (typeof availableSpots === 'number') {
+            const spotsElement = card.querySelector('.available-spots span');
+            if (spotsElement) {
+                const isAvailable = availableSpots > 0;
+                spotsElement.className = `badge bg-${isAvailable ? 'success' : 'danger'}`;
+                spotsElement.textContent = `${availableSpots} cupos`;
+            }
+        }
+    } catch (error) {
+        console.error('Error al actualizar UI:', error);
+        // No mostrar toast aquí ya que es una actualización visual secundaria
+    }
+}
+
+
 // #endregion
 
 // #region Events and Event Handlers
@@ -384,8 +580,6 @@ function createEventCard(schedule) {
     const availableSpots = schedule.availableSpots ?? 
         (schedule.capacity - (schedule.currentInscriptions || 0));
     const isAvailable = availableSpots > 0;
-    
-    // Verificar si el usuario está inscrito
     const isInscribed = schedule.userInscribed;
     
     let buttonClass = isInscribed ? 'btn-success' : (isAvailable ? 'btn-danger' : 'btn-secondary');
@@ -394,42 +588,49 @@ function createEventCard(schedule) {
     let buttonDisabled = isInscribed || !isAvailable;
 
     return `
-        <div class="col-12 col-md-6 col-lg-4" data-schedule-id="${schedule.scheduleId}">
+        <div class="col-12 col-md-6 col-lg-4 mb-4" data-schedule-id="${schedule.scheduleId}">
             <div class="card bg-dark text-white h-100 border-secondary hover-border-danger">
-                <div class="position-relative">
+                <!-- Contenedor de imagen responsive -->
+                <div class="position-relative card-img-container">
                     <img 
                         src="${schedule.event.photo || 'https://via.placeholder.com/400x300'}"
                         class="card-img-top"
                         alt="${schedule.event.name}"
+                        loading="lazy"
                         style="height: 200px; object-fit: cover;"
                     >
-                    <div class="position-absolute top-0 end-0 bg-danger text-white px-3 py-1">
-                        ${schedule.event.type}
+                    <div class="position-absolute top-0 end-0 p-2">
+                        <span class="badge bg-danger">${schedule.event.type}</span>
                     </div>
                 </div>
                 
-                <div class="card-body">
-                    <h5 class="card-title text-danger">${schedule.event.name}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">${schedule.event.type}</h6>
-                    <p class="card-text">${schedule.event.description}</p>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title text-danger text-truncate" title="${schedule.event.name}">
+                        ${schedule.event.name}
+                    </h5>
                     
-                    <div class="mb-3">
-                        <p class="mb-1"><small><strong>Autor:</strong> ${schedule.event.author}</small></p>
-                        <p class="mb-1"><small><strong>Ubicación:</strong> ${schedule.event.location}</small></p>
-                        <p class="mb-1"><small><strong>Duración:</strong> ${schedule.event.duration}</small></p>
-                        <p class="mb-1 available-spots">
-                            <small>
-                                <strong>Cupos disponibles:</strong> 
-                                <span class="badge bg-${isAvailable ? 'success' : 'danger'}">
-                                    ${availableSpots}
+                    <div class="flex-grow-1">
+                        <p class="card-text small mb-2">${schedule.event.description}</p>
+                        
+                        <div class="event-details small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span><i class="fas fa-user me-2"></i>${schedule.event.author}</span>
+                                <span><i class="fas fa-clock me-2"></i>${schedule.event.duration}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-map-marker-alt me-2"></i>${schedule.event.location}</span>
+                                <span class="available-spots">
+                                    <span class="badge bg-${isAvailable ? 'success' : 'danger'}">
+                                        ${availableSpots} cupos
+                                    </span>
                                 </span>
-                            </small>
-                        </p>
+                            </div>
+                        </div>
                     </div>
 
                     <button
                         onclick="handleInscription('${schedule.scheduleId}')"
-                        class="btn w-100 ${buttonClass}"
+                        class="btn w-100 ${buttonClass} mt-auto"
                         ${buttonDisabled ? 'disabled' : ''}
                     >
                         ${buttonText}
@@ -439,6 +640,7 @@ function createEventCard(schedule) {
         </div>
     `;
 }
+
 
 /**
  * Agrupa los schedules por horario
@@ -470,7 +672,19 @@ function groupSchedulesByTime(schedules) {
  */
 // Modificar handleInscription para actualizar los cupos inmediatamente
 // Modificar la función handleInscription
+// Modificar la función handleInscription
 async function handleInscription(scheduleId) {
+    // Obtener el botón antes de cualquier operación
+    const buttonElement = document.querySelector(`[data-schedule-id="${scheduleId}"] button`);
+    if (!buttonElement) {
+        console.error('Botón no encontrado');
+        return;
+    }
+
+    // Guardar el estado original del botón
+    const originalText = buttonElement.innerHTML;
+    const originalDisabled = buttonElement.disabled;
+
     try {
         const token = getAuthToken();
         if (!token) {
@@ -478,75 +692,80 @@ async function handleInscription(scheduleId) {
             return;
         }
 
-        // Verificar cupos disponibles antes de intentar la inscripción
+        // Función para actualizar el estado del botón
+        const updateButtonState = (isProcessing) => {
+            buttonElement.disabled = isProcessing;
+            buttonElement.innerHTML = isProcessing ? 
+                '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...' : 
+                originalText;
+        };
+
+        // Iniciar procesamiento
+        updateButtonState(true);
+
+        // Verificar cupos disponibles
         const availableSpots = await fetchAvailableSpots(scheduleId);
         if (availableSpots === null || availableSpots <= 0) {
             showToast('No hay cupos disponibles', 'warning');
+            updateButtonState(false);
             return;
         }
 
-        const response = await fetch('/api/inscriptions', {
+        // Intentar realizar la inscripción
+        const response = await ApiClient.request('/inscriptions', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
             body: JSON.stringify({ scheduleId })
+        }).catch(error => {
+            // Manejar errores específicos
+            if (error.status === 400 && error.message.includes('horario')) {
+                showToast('Ya estás inscrito en otro evento en este horario', 'warning');
+                throw error;
+            }
+            throw error;
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-            showToast('Inscripción exitosa', 'success');
-            
-            // Actualizar el cupo disponible específico
-            const newSpots = await fetchAvailableSpots(scheduleId);
-            
-            // Actualizar la UI con el nuevo valor
-            const card = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
-            if (card) {
-                const spotsElement = card.querySelector('.available-spots small');
-                if (spotsElement) {
-                    const isAvailable = newSpots > 0;
-                    spotsElement.innerHTML = `
-                        <strong>Cupos disponibles:</strong> 
-                        <span class="badge bg-${isAvailable ? 'success' : 'danger'}">
-                            ${newSpots}
-                        </span>
-                    `;
-                }
-
-                // Actualizar el botón para mostrar estado de inscripción
-                const button = card.querySelector('button');
-                if (button) {
-                    button.className = 'btn w-100 btn-success'; // Cambia a verde para indicar inscripción exitosa
-                    button.disabled = true; // Deshabilita el botón
-                    button.innerHTML = '<i class="fas fa-check me-2"></i>INSCRIPTO'; // Agrega un ícono de check
-                }
-            }
-        } else {
-            showToast(data.message || 'Error en la inscripción', 'error');
+        // Si la inscripción fue exitosa
+        try {
+            // Enviar notificación por email (no bloquear la UI por esto)
+            const userData = getUserData();
+            NotificationService.sendEmailNotification(userData.id, {
+                type: 'new_inscription',
+                scheduleId,
+                eventName: response.eventName
+            }).catch(error => {
+                console.error('Error al enviar notificación:', error);
+                // No mostrar error al usuario ya que es secundario
+            });
+        } catch (error) {
+            console.error('Error en notificación:', error);
+            // No afectar el flujo principal
         }
+
+        // Actualizar UI para mostrar éxito
+        showToast('Inscripción exitosa', 'success');
+        
+        // Actualizar la UI del botón y la card
+        buttonElement.className = 'btn w-100 btn-success mt-auto';
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '<i class="fas fa-check me-2"></i>INSCRIPTO';
+
+        // Actualizar los cupos disponibles
+        await updateUIAfterInscription(scheduleId);
+        
     } catch (error) {
-        console.error('Error en la inscripción:', error);
-        showToast('Error al procesar la inscripción', 'error');
+        // Restaurar el botón a su estado original en caso de error
+        buttonElement.disabled = originalDisabled;
+        buttonElement.innerHTML = originalText;
+        
+        // Manejar el error
+        handleError(error);
     }
 }
+
 // Función auxiliar para verificar si el usuario está inscrito en un evento
 async function checkUserInscription(scheduleId) {
     try {
-        const token = getAuthToken();
-        if (!token) return false;
-
-        const response = await fetch(`/api/inscriptions/check/${scheduleId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) return false;
-        
-        const data = await response.json();
+        const data = await ApiClient.request(`/inscriptions/check/${scheduleId}`);
         return data.isInscribed;
     } catch (error) {
         console.error('Error al verificar inscripción:', error);
@@ -570,17 +789,7 @@ async function showUserInscriptions() {
         const existingBackdrop = document.querySelector('.modal-backdrop');
         if (existingBackdrop) existingBackdrop.remove();
 
-        const response = await fetch('/api/inscriptions/user', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await ApiClient.request('/inscriptions/user');
         
         if (!data.inscriptions || data.inscriptions.length === 0) {
             showNoInscriptionsModal();
@@ -606,12 +815,12 @@ async function showUserInscriptions() {
         });
 
         modal.show();
-
     } catch (error) {
         console.error('Error al obtener inscripciones:', error);
-        showToast('Error al cargar las inscripciones: ' + error.message, 'error');
+        showToast('Error al cargar las inscripciones', 'error');
     }
 }
+
 // Función para obtener todos los cupos disponibles actuales
 async function fetchAllAvailableSpots() {
     try {
@@ -725,22 +934,7 @@ function formatTime(time) {
  * @param {Array} schedules - Array de schedules
  * @returns {Object} Schedules agrupados por horario
  */
-function groupSchedulesByTime(schedules) {
-    const sortedSchedules = schedules.sort((a, b) => {
-        return new Date('1970/01/01 ' + a.startTime) - new Date('1970/01/01 ' + b.startTime);
-    });
 
-    const groupedSchedules = {};
-    sortedSchedules.forEach(schedule => {
-        const time = schedule.startTime.slice(0, 5); // Obtener HH:mm
-        if (!groupedSchedules[time]) {
-            groupedSchedules[time] = [];
-        }
-        groupedSchedules[time].push(schedule);
-    });
-
-    return groupedSchedules;
-}
 
 /**
  * Crea el encabezado de tiempo con estilo de tarjeta
@@ -766,11 +960,7 @@ function createTimeHeader(time) {
 // Modificar la función loadSchedules
 async function loadSchedules() {
     try {
-        // Obtener los schedules
         const schedules = await fetchSchedules();
-        console.log('Schedules originales:', schedules);
-
-        // Obtener los cupos disponibles para cada schedule
         const schedulesWithSpots = await Promise.all(
             schedules.map(async schedule => {
                 const availableSpots = await fetchAvailableSpots(schedule.scheduleId);
@@ -781,14 +971,10 @@ async function loadSchedules() {
                 };
             })
         );
-
-        console.log('Schedules con cupos actualizados:', schedulesWithSpots);
         
-        // Filtrar y agrupar los schedules
         const filteredSchedules = filterSchedules(schedulesWithSpots, filters.searchTerm);
         const groupedSchedules = groupSchedulesByTime(filteredSchedules);
         
-        // Renderizar los schedules
         const eventsGrid = document.getElementById('eventsGrid');
         eventsGrid.innerHTML = '';
 
@@ -801,7 +987,6 @@ async function loadSchedules() {
             return;
         }
 
-        // Mostrar eventos agrupados por tiempo
         Object.entries(groupedSchedules).forEach(([time, schedules]) => {
             const timeSection = document.createElement('div');
             timeSection.className = 'col-12 mb-5';
@@ -842,16 +1027,70 @@ function initializeFilterListeners() {
     });
 }
 
-// Asegurarse de que se inicialicen los listeners cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Cargado - Inicializando filtros'); // Debug
-    initializeFilterListeners();
-    loadSchedules();
-});
 // #endregion
 
 // #region Initialization
+// Definir los estilos CSS como una constante
+const responsiveStyles = `
+    <style>
+        /* Mejoras responsive */
+        @media (max-width: 768px) {
+            .card-img-container {
+                height: 150px;
+            }
+            
+            .card-title {
+                font-size: 1.1rem;
+            }
+            
+            .event-details {
+                font-size: 0.8rem;
+            }
+            
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+        }
+        
+        /* Animaciones suaves */
+        .card {
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        /* Loading placeholders */
+        .loading-placeholder {
+            background: linear-gradient(90deg, #2c2c2c 25%, #3c3c3c 50%, #2c2c2c 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+`;
+
+// Función para inicializar los estilos
+function initializeStyles() {
+    // Verificar si los estilos ya están agregados para evitar duplicados
+    if (!document.querySelector('#responsive-styles')) {
+        const styleElement = document.createElement('div');
+        styleElement.id = 'responsive-styles';
+        styleElement.innerHTML = responsiveStyles;
+        document.head.appendChild(styleElement);
+    }
+}
+
+// Una única inicialización para todo
 document.addEventListener('DOMContentLoaded', () => {
+    // Agregar los estilos responsive
+    initializeStyles();
+    
     // Inicializar toasts
     document.querySelectorAll('.toast').forEach(toastEl => {
         new bootstrap.Toast(toastEl);
@@ -862,6 +1101,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicializar event listeners
     initializeEventListeners();
+
+    // Inicializar filtros
+    initializeFilterListeners();
 
     // Cargar datos iniciales
     loadSchedules();
