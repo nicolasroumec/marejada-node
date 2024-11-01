@@ -223,10 +223,7 @@ function createEventCard(schedule) {
                         style="height: 200px; object-fit: cover;"
                     >
                     <div class="position-absolute top-0 end-0 bg-danger text-white px-3 py-1">
-                        ${new Date(schedule.startTime).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })}
+                        ${schedule.event.type}
                     </div>
                 </div>
                 
@@ -308,12 +305,61 @@ async function updateEventCapacity(scheduleId) {
 }
 
 // Función actualizada para mostrar las inscripciones del usuario
+async function cancelInscription(scheduleId) {
+    if (!confirm('¿Estás seguro de que deseas cancelar esta inscripción?')) {
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/inscriptions/${scheduleId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al cancelar la inscripción');
+        }
+
+        alert('Inscripción cancelada exitosamente');
+        
+        // Actualizar la vista
+        const modal = bootstrap.Modal.getInstance(document.getElementById('inscriptionsModal'));
+        if (modal) {
+            modal.hide();
+        }
+        
+        await loadSchedules(); // Recargar los eventos disponibles
+        await showUserInscriptions(); // Mostrar modal actualizado
+        
+    } catch (error) {
+        console.error('Error al cancelar la inscripción:', error);
+        alert(error.message || 'Error al cancelar la inscripción');
+    }
+}
+
+// Actualización de la parte del modal donde se genera el botón de cancelar
 async function showUserInscriptions() {
     try {
         const token = localStorage.getItem('token');
         if (!token) {
             alert('Debe iniciar sesión para ver sus inscripciones');
             return;
+        }
+
+        // Remover modales existentes primero
+        let existingModal = document.getElementById('inscriptionsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        const existingBackdrop = document.querySelector('.modal-backdrop');
+        if (existingBackdrop) {
+            existingBackdrop.remove();
         }
 
         const response = await fetch('/api/inscriptions/user', {
@@ -327,18 +373,18 @@ async function showUserInscriptions() {
         }
 
         const data = await response.json();
-        
-        // Remover modal anterior si existe
-        let existingModal = document.getElementById('inscriptionsModal');
-        if (existingModal) {
-            existingModal.remove();
+        console.log('Inscripciones recibidas:', data.inscriptions);
+
+        // Verificar si hay inscripciones - MOVIDO DESPUÉS DE LA RESPUESTA
+        if (!data.inscriptions || data.inscriptions.length === 0) {
+            showNoInscriptionsModal();
+            return;
         }
 
-        // Remover cualquier backdrop existente
-        const existingBackdrop = document.querySelector('.modal-backdrop');
-        if (existingBackdrop) {
-            existingBackdrop.remove();
-        }
+        // Ordenar inscripciones por hora
+        const sortedInscriptions = [...data.inscriptions].sort((a, b) => {
+            return new Date('1970/01/01 ' + (a.event_time || '00:00')) - new Date('1970/01/01 ' + (b.event_time || '00:00'));
+        });
 
         // Crear el HTML del modal
         const modalHTML = `
@@ -346,35 +392,42 @@ async function showUserInscriptions() {
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content bg-dark text-white">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="inscriptionsModalLabel">Mis Inscripciones</h5>
+                            <h5 class="modal-title" id="inscriptionsModalLabel">
+                                Mis Inscripciones
+                                <span class="badge bg-danger ms-2">${sortedInscriptions.length}</span>
+                            </h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            ${data.inscriptions && data.inscriptions.length > 0 ? `
-                                <div class="row">
-                                    ${data.inscriptions.map(inscription => `
+                            <div class="row">
+                                ${sortedInscriptions.map(inscription => {
+                                    console.log('Procesando inscripción:', inscription);
+                                    return `
                                         <div class="col-12 mb-3">
                                             <div class="card bg-secondary">
                                                 <div class="card-body">
                                                     <h5 class="card-title text-danger">${inscription.event_name}</h5>
-                                                    <p class="card-text">
-                                                        <small>
-                                                            <strong>Fecha:</strong> ${new Date(inscription.start_time).toLocaleString()}<br>
-                                                            <strong>Ubicación:</strong> ${inscription.location}<br>
-                                                            <strong>Tipo:</strong> ${inscription.type}
-                                                        </small>
-                                                    </p>
-                                                    <button 
-                                                        onclick="cancelInscription('${inscription.inscription_id}')"
-                                                        class="btn btn-danger btn-sm">
-                                                        Cancelar Inscripción
-                                                    </button>
+                                                    <div class="card-text">
+                                                        <div class="mb-2">
+                                                            <small>
+                                                                <strong>Hora:</strong> ${inscription.event_time || 'No disponible'}<br>
+                                                                <strong>Ubicación:</strong> ${inscription.location}<br>
+                                                                <strong>Tipo:</strong> ${inscription.type}
+                                                            </small>
+                                                        </div>
+                                                        <button 
+                                                            type="button" 
+                                                            onclick="cancelInscription(${inscription.schedule_id})" 
+                                                            class="btn btn-danger btn-sm w-100">
+                                                            Cancelar Inscripción
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    `).join('')}
-                                </div>
-                            ` : '<p class="text-center">No tienes inscripciones activas</p>'}
+                                    `;
+                                }).join('')}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -384,16 +437,13 @@ async function showUserInscriptions() {
         // Insertar el modal en el documento
         document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-        // Obtener el nuevo modal
+        // Obtener el nuevo modal y mostrarlo
         const modalElement = document.getElementById('inscriptionsModal');
-        
-        // Inicializar el modal de Bootstrap
         const modal = new bootstrap.Modal(modalElement, {
             backdrop: 'static',
             keyboard: false
         });
 
-        // Evento para limpiar el modal cuando se cierre
         modalElement.addEventListener('hidden.bs.modal', function () {
             this.remove();
             const backdrop = document.querySelector('.modal-backdrop');
@@ -403,7 +453,6 @@ async function showUserInscriptions() {
             document.body.classList.remove('modal-open');
         });
 
-        // Mostrar el modal
         modal.show();
 
     } catch (error) {
@@ -411,7 +460,87 @@ async function showUserInscriptions() {
         alert('Error al cargar las inscripciones: ' + error.message);
     }
 }
+ 
+// Función para mostrar modal sin inscripciones
+function showNoInscriptionsModal() {
+    const modalHTML = `
+        <div class="modal fade" id="inscriptionsModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content bg-dark text-white">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Mis Inscripciones</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-times fa-3x text-danger mb-3"></i>
+                        </div>
+                        <h5>No tienes inscripciones activas</h5>
+                        <p class="text-muted">Explora los eventos disponibles y inscríbete en los que te interesen.</p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const modalElement = document.getElementById('inscriptionsModal');
+    const modal = new bootstrap.Modal(modalElement);
+    
+    modalElement.addEventListener('hidden.bs.modal', function () {
+        this.remove();
+        document.body.classList.remove('modal-open');
+    });
+
+    modal.show();
+}
+
+
+// Actualizar la función cancelInscription para manejar mejor el cierre del modal
+async function cancelInscription(scheduleId) {
+    if (!confirm('¿Estás seguro de que deseas cancelar esta inscripción?')) {
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/inscriptions/${scheduleId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al cancelar la inscripción');
+        }
+
+        alert('Inscripción cancelada exitosamente');
+        
+        // Cerrar el modal actual
+        const modal = bootstrap.Modal.getInstance(document.getElementById('inscriptionsModal'));
+        if (modal) {
+            modal.hide();
+        }
+
+        // Esperar a que se complete la animación del modal
+        setTimeout(async () => {
+            await loadSchedules(); // Recargar los eventos disponibles
+            await showUserInscriptions(); // Mostrar modal actualizado
+        }, 500);
+        
+    } catch (error) {
+        console.error('Error al cancelar la inscripción:', error);
+        alert(error.message || 'Error al cancelar la inscripción');
+    }
+}
 
 
 // Función para filtrar schedules
@@ -473,15 +602,55 @@ const filters = {
     capacity: 'all'
 };
 
+
+// función para agrupar y ordenar los eventos por horario:
+function groupSchedulesByTime(schedules) {
+    // Ordenar los schedules por hora
+    const sortedSchedules = schedules.sort((a, b) => {
+        return new Date('1970/01/01 ' + a.startTime) - new Date('1970/01/01 ' + b.startTime);
+    });
+
+    // Agrupar por hora
+    const groupedSchedules = {};
+    sortedSchedules.forEach(schedule => {
+        const time = schedule.startTime.slice(0, 5); // Obtener HH:mm
+        if (!groupedSchedules[time]) {
+            groupedSchedules[time] = [];
+        }
+        groupedSchedules[time].push(schedule);
+    });
+
+    return groupedSchedules;
+}
+
+
 // Función para cargar y mostrar los schedules
 async function loadSchedules() {
     // Obtener los datos
     allSchedules = await fetchSchedules();
     
-    // Aplicar filtros y renderizar
+    // Aplicar filtros
     const filteredSchedules = filterSchedules(allSchedules, filters);
+    
+    // Agrupar por horario
+    const groupedSchedules = groupSchedulesByTime(filteredSchedules);
+    
+    // Renderizar los grupos
     const eventsGrid = document.getElementById('eventsGrid');
-    eventsGrid.innerHTML = filteredSchedules.map(createEventCard).join('');
+    eventsGrid.innerHTML = '';
+
+    // Crear sección para cada horario
+    Object.entries(groupedSchedules).forEach(([time, schedules]) => {
+        const timeSection = document.createElement('div');
+        timeSection.className = 'col-12 mb-4';
+        timeSection.innerHTML = `
+            <h3 class="text-white mb-3">Horario: ${time}</h3>
+            <div class="row g-4">
+                ${schedules.map(schedule => createEventCard(schedule)).join('')}
+            </div>
+        `;
+        eventsGrid.appendChild(timeSection);
+    });
 }
 
 // Inicializar los event listeners

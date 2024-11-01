@@ -94,30 +94,57 @@ class Inscription {
         return transporter.sendMail(mailOptions);
     }
 
-    static async getByUserId(userId) {
-        try {
-            const [inscriptions] = await pool.query(`
-                SELECT 
-                    i.id as inscription_id,
-                    e.id as event_id,
-                    e.name as event_name,
-                    e.description,
-                    e.location,
-                    e.type,
-                    e.duration,
-                    s.start_time,
-                    s.capacity
-                FROM inscriptions i
-                JOIN schedules s ON i.schedule_id = s.id
-                JOIN events e ON s.event_id = e.id
-                WHERE i.user_id = ?
-            `, [userId]);
+    // static async getByUserId(userId) {
+    //     try {
+    //         const [inscriptions] = await pool.query(`
+    //             SELECT 
+    //                 i.id as inscription_id,
+    //                 e.id as event_id,
+    //                 e.name as event_name,
+    //                 e.description,
+    //                 e.location,
+    //                 e.type,
+    //                 e.duration,
+    //                 s.start_time,
+    //                 s.capacity
+    //             FROM inscriptions i
+    //             JOIN schedules s ON i.schedule_id = s.id
+    //             JOIN events e ON s.event_id = e.id
+    //             WHERE i.user_id = ?
+    //         `, [userId]);
 
-            return inscriptions;
-        } catch (error) {
-            throw error;
-        }
+    //         return inscriptions;
+    //     } catch (error) {
+    //         throw error;
+    //     }
+    // }
+
+    // En Inscription.js, ajusta el getByUserId:
+static async getByUserId(userId) {
+    try {
+        const [inscriptions] = await pool.query(`
+ SELECT 
+    i.id as inscription_id,
+    s.id as schedule_id,
+    e.name as event_name,
+    e.description,
+    e.location,
+    e.type,
+    e.duration,
+    s.start_time as event_time,
+    s.capacity
+FROM inscriptions i
+JOIN schedules s ON i.schedule_id = s.id
+JOIN events e ON s.event_id = e.id
+WHERE i.user_id = ?
+ORDER BY s.start_time
+        `, [userId]);
+
+        return inscriptions;
+    } catch (error) {
+        throw error;
     }
+}
 
     static async getByScheduleId(scheduleId) {
         try {

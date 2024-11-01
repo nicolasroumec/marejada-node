@@ -96,7 +96,7 @@ const inscriptionController = {
             res.status(500).json({ message: 'Error al cancelar la inscripción' });
         }
     },
-
+    
 
     
     async getAvailableSpots(req, res) {
@@ -116,36 +116,40 @@ const inscriptionController = {
         }
     }
 };
-// Función para cancelar inscripción
-async function cancelInscription(inscriptionId) {
-    if (!confirm('¿Estás seguro de que deseas cancelar esta inscripción?')) {
-        return;
-    }
 
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/inscriptions/${inscriptionId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+// // Función para cancelar inscripción en el frontend
+// async function cancelInscription(inscriptionId) {
+//     if (!confirm('¿Estás seguro de que deseas cancelar esta inscripción?')) {
+//         return;
+//     }
 
-        if (response.ok) {
-            alert('Inscripción cancelada exitosamente');
-            // Recargar el modal con las inscripciones actualizadas
-            showUserInscriptions();
-            // Recargar los eventos disponibles
-            await loadSchedules();
-        } else {
-            const error = await response.json();
-            alert(error.message);
-        }
-    } catch (error) {
-        console.error('Error al cancelar inscripción:', error);
-        alert('Error al cancelar la inscripción');
-    }
-}
+//     try {
+//         const token = localStorage.getItem('token');
+//         const response = await fetch(`/api/inscriptions/cancel/${inscriptionId}`, {
+//             method: 'DELETE',
+//             headers: {
+//                 'Authorization': `Bearer ${token}`,
+//                 'Content-Type': 'application/json'
+//             }
+//         });
+
+//         if (!response.ok) {
+//             const errorData = await response.json();
+//             throw new Error(errorData.message || 'Error al cancelar la inscripción');
+//         }
+
+//         const data = await response.json();
+//         alert('Inscripción cancelada exitosamente');
+        
+//         // Actualizar la vista
+//         await showUserInscriptions();
+//         await loadSchedules();
+        
+//     } catch (error) {
+//         console.error('Error al cancelar la inscripción:', error);
+//         alert(error.message || 'Error al cancelar la inscripción');
+//     }
+// }
 
 export default inscriptionController;
 
