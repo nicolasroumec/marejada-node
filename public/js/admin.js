@@ -25,7 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function fetchEvents() {
         fetch('/api/events/get-events')
             .then(response => response.json())
-            .then(events => {
+            .then(data => {
+                console.log("Datos recibidos:", data); // Verifica la estructura aquí
+    
+                // Accede a `data.data` si los eventos están anidados bajo esa propiedad
+                const events = Array.isArray(data.data) ? data.data : null;
+    
+                if (!events) {
+                    throw new Error("La respuesta no es un array de eventos");
+                }
+    
                 eventList.innerHTML = '';
                 events.forEach(event => {
                     const eventElement = document.createElement('div');
@@ -69,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 addDeleteEventListeners();
             })
             .catch(error => console.error('Error:', error));
-    }
+    }   
 
     function formatTime(timeString) {
         if (!timeString) return 'N/A';
