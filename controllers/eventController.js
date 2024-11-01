@@ -52,11 +52,21 @@ export const getAllEvents = async (req, res) => {
         const events = await listEvents();
         
         if (!events || events.length === 0) {
-            return res.status(404).json({ message: 'No events found' });
+            return res.status(404).json({ 
+                status: 'error',
+                message: 'No events found' 
+            });
         }
 
-        res.status(200).json(events);
+        return res.status(200).json({
+            status: 'success',
+            data: events
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching events', error: error.message });
+        return res.status(500).json({ 
+            status: 'error',
+            message: 'Error fetching events', 
+            error: error.message 
+        });
     }
 };

@@ -32,29 +32,59 @@ export const deleteEvent = async (eventId) => {
 
 export const listEvents = async () => {
     try {
-        const [events] = await pool.query(`
+        const query = `
             SELECT 
                 e.*,
-                (
-                    SELECT JSON_ARRAYAGG(
-                        JSON_OBJECT(
-                            'id', s.id,
-                            'start_time', s.start_time,
-                            'capacity', s.capacity
+                COALESCE(
+                    JSON_ARRAYAGG(
+                        IF(s.id IS NOT NULL,
+                            JSON_OBJECT(
+                                'id', s.id,
+                                'event_id', s.event_id,
+                                'start_time', TIME_FORMAT(s.start_time, '%H:%i'),
+                                'capacity', s.capacity
+                            ),
+                            NULL
                         )
-                    )
-                    FROM schedules s
-                    WHERE s.event_id = e.id
+                    ),
+                    '[]'
                 ) as schedules
             FROM events e
-        `);
+            LEFT JOIN schedules s ON e.id = s.event_id
+            GROUP BY e.id
+        `;
         
-        // Transformar null en array vacío cuando no hay horarios
-        return events.map(event => ({
-            ...event,
-            schedules: event.schedules === null ? [] : JSON.parse(event.schedules)
-        }));
+        const [events] = await pool.query(query);
+        
+        if (!events || events.length === 0) {
+            return [];
+        }
+
+        const processedEvents = events.map(event => {
+            try {
+                const eventData = {
+                    ...event,
+                    schedules: event.schedules === 'NULL' || !event.schedules ? 
+                              [] : 
+                              JSON.parse(event.schedules)
+                };
+                
+                if (Array.isArray(eventData.schedules)) {
+                    eventData.schedules = eventData.schedules.filter(schedule => schedule !== null);
+                }
+                
+                return eventData;
+            } catch (parseError) {
+                return {
+                    ...event,
+                    schedules: []
+                };
+            }
+        });
+
+        return processedEvents;
+
     } catch (error) {
-        throw error;
+        throw new Error(`Error en la consulta de eventos: ${error.message}`);
     }
 };

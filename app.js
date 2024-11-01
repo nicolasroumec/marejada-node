@@ -22,7 +22,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Rutas de la API
 app.use('/api/auth', authRoutes);
 app.use('/api/inscriptions', inscriptionRoutes);
-app.use('/event', eventRoutes);
+app.use('/api/events', eventRoutes);
 app.use('/api/schedules', scheduleRoutes);  // Nueva ruta para schedules
 
 // Ruta raíz

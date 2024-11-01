@@ -13,12 +13,12 @@ router.get('/', (req, res) => {
 });
 
 // Ruta para crear un evento con horarios
-router.post('/events', createEventWithSchedules);
+router.post('/event', createEventWithSchedules);
 
 // Ruta para eliminar un evento y sus horarios asociados
 router.delete('/events/:id', deleteEventById);
 
 // Ruta para listar todos los eventos
-router.get('/events', getAllEvents);
+router.get('/get-events', getAllEvents);
 
 export default router;
