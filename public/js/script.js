@@ -583,73 +583,43 @@ async function cancelInscription(scheduleId) {
 
 // #region Filters and Visualization
 const filters = {
-    eventType: 'all',
-    capacity: 'all',
     searchTerm: ''
 };
 
 /**
- * Obtiene los tipos únicos de eventos del array de schedules
+ * Filtra los schedules según el término de búsqueda
  * @param {Array} schedules - Array de schedules
- * @returns {Array} Tipos únicos de eventos
- */
-function getUniqueEventTypes(schedules) {
-    const types = new Set(schedules.map(schedule => schedule.event.type));
-    return Array.from(types).sort();
-}
-
-/**
- * Actualiza el select de tipos de eventos
- * @param {Array} types - Array de tipos únicos
- */
-function updateTypeFilter(types) {
-    const typeFilter = document.getElementById('typeFilter');
-    typeFilter.innerHTML = '<option value="all">Todos los tipos</option>';
-    types.forEach(type => {
-        const option = document.createElement('option');
-        option.value = type.toLowerCase();
-        option.textContent = type;
-        typeFilter.appendChild(option);
-    });
-}
-
-/**
- * Filtra los schedules según los criterios seleccionados
- * @param {Array} schedules - Array de schedules
- * @param {Object} filters - Filtros aplicados
+ * @param {string} searchTerm - Término de búsqueda
  * @returns {Array} Schedules filtrados
  */
-function filterSchedules(schedules, filters) {
-    return schedules.filter(schedule => {
-        // Filtro por búsqueda
-        if (filters.searchTerm && !schedule.event.name.toLowerCase().includes(filters.searchTerm.toLowerCase())) {
-            return false;
-        }
+function filterSchedules(schedules, searchTerm) {
+    if (!searchTerm) return schedules;
+    
+    return schedules.filter(schedule => 
+        schedule.event.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+}
 
-        // Filtro por tipo
-        if (filters.eventType !== 'all' && 
-            schedule.event.type.toLowerCase() !== filters.eventType.toLowerCase()) {
-            return false;
-        }
-
-        // Filtro por capacidad
-        const availableSpots = schedule.capacity - (schedule.currentInscriptions || 0);
-        if (filters.capacity !== 'all') {
-            switch (filters.capacity) {
-                case 'available':
-                    if (availableSpots <= 0) return false;
-                    break;
-                case 'almostFull':
-                    if (availableSpots > 5 || availableSpots <= 0) return false;
-                    break;
-                case 'full':
-                    if (availableSpots > 0) return false;
-                    break;
-            }
-        }
-
-        return true;
+/**
+ * Agrupa los schedules por horario de inicio
+ * @param {Array} schedules - Array de schedules
+ * @returns {Object} Schedules agrupados por horario
+ */
+function groupSchedulesByTime(schedules) {
+    const sortedSchedules = schedules.sort((a, b) => {
+        return new Date('1970/01/01 ' + a.startTime) - new Date('1970/01/01 ' + b.startTime);
     });
+
+    const groupedSchedules = {};
+    sortedSchedules.forEach(schedule => {
+        const time = schedule.startTime.slice(0, 5); // Obtener HH:mm
+        if (!groupedSchedules[time]) {
+            groupedSchedules[time] = [];
+        }
+        groupedSchedules[time].push(schedule);
+    });
+
+    return groupedSchedules;
 }
 
 /**
@@ -657,12 +627,7 @@ function filterSchedules(schedules, filters) {
  */
 async function loadSchedules() {
     const schedules = await fetchSchedules();
-    
-    // Actualizar tipos de eventos en el filtro
-    const types = getUniqueEventTypes(schedules);
-    updateTypeFilter(types);
-    
-    const filteredSchedules = filterSchedules(schedules, filters);
+    const filteredSchedules = filterSchedules(schedules, filters.searchTerm);
     const groupedSchedules = groupSchedulesByTime(filteredSchedules);
     
     const eventsGrid = document.getElementById('eventsGrid');
@@ -670,55 +635,30 @@ async function loadSchedules() {
 
     if (Object.keys(groupedSchedules).length === 0) {
         eventsGrid.innerHTML = `
-            // <div class="col-12 text-center text-white">
-            //     <h4>No se encontraron eventos con los filtros seleccionados</h4>
-            // </div>
+            <div class="col-12 text-center text-white">
+                <h4>No se encontraron eventos</h4>
+            </div>
         `;
         return;
     }
 
-    // Agrupar por tipo de evento
-    const schedulesByType = {};
+    // Mostrar eventos agrupados por tiempo
     Object.entries(groupedSchedules).forEach(([time, schedules]) => {
-        schedules.forEach(schedule => {
-            const type = schedule.event.type;
-            if (!schedulesByType[type]) {
-                schedulesByType[type] = {};
-            }
-            if (!schedulesByType[type][time]) {
-                schedulesByType[type][time] = [];
-            }
-            schedulesByType[type][time].push(schedule);
-        });
-    });
-
-    // Mostrar eventos agrupados por tipo y tiempo
-    Object.entries(schedulesByType).forEach(([type, timeGroups]) => {
-        const typeSection = document.createElement('div');
-        typeSection.className = 'col-12 mb-5';
-        typeSection.innerHTML = `<h2 class="text-white mb-4"></h2>`;
-
-        Object.entries(timeGroups).forEach(([time, schedules]) => {
-            const timeSection = document.createElement('div');
-            timeSection.className = 'mb-4';
-            timeSection.innerHTML = `
-                <h3 class="text-white mb-3">Horario: ${time}</h3>
-                <div class="row g-4">
-                    ${schedules.map(schedule => createEventCard(schedule)).join('')}
-                </div>
-            `;
-            typeSection.appendChild(timeSection);
-        });
-
-        eventsGrid.appendChild(typeSection);
+        const timeSection = document.createElement('div');
+        timeSection.className = 'col-12 mb-5';
+        timeSection.innerHTML = `
+            <h3 class="text-white mb-4">Horario: ${time}</h3>
+            <div class="row g-4">
+                ${schedules.map(schedule => createEventCard(schedule)).join('')}
+            </div>
+        `;
+        eventsGrid.appendChild(timeSection);
     });
 }
 
-// Inicializar event listeners para filtros
+// Inicializar event listeners para el filtro de búsqueda
 function initializeFilterListeners() {
     const searchInput = document.getElementById('searchInput');
-    const typeFilter = document.getElementById('typeFilter');
-    const capacityFilter = document.getElementById('capacityFilter');
 
     // Búsqueda en tiempo real con debounce
     let searchTimeout;
@@ -727,17 +667,7 @@ function initializeFilterListeners() {
         searchTimeout = setTimeout(() => {
             filters.searchTerm = e.target.value.trim();
             loadSchedules();
-        }, 300); // Esperar 300ms después de que el usuario deje de escribir
-    });
-
-    typeFilter.addEventListener('change', (e) => {
-        filters.eventType = e.target.value;
-        loadSchedules();
-    });
-
-    capacityFilter.addEventListener('change', (e) => {
-        filters.capacity = e.target.value;
-        loadSchedules();
+        }, 300);
     });
 }
 // #endregion

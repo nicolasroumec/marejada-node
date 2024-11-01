@@ -1,434 +1,227 @@
-/* Variables personalizadas */
+/* Importación de fuentes */
+@import url('https://fonts.googleapis.com/css2?family=Nosifer&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Variables personalizadas con paleta actualizada */
 :root {
-    --primary-dark: #0D0D0D;      /* Negro principal */
-    --secondary-dark: #1A1A1A;    /* Gris oscuro */
-    --accent-blue: #0f1865;       /* Azul oscuro */
-    --accent-blue-light: #4B5DD7; /* Azul claro para títulos */
-    --purple-button: #2D0B7F;     /* Color morado para botones */
-    --dark-blue: #0a1048;         /* Version más oscura del nuevo color */
-    --text-primary: #FFFFFF;      /* Texto principal */
-    --text-secondary: #CCCCCC;    /* Texto secundario */
+    /* Colores principales */
+    --bs-primary: #1a0f36;          /* Violeta oscuro principal */
+    --bs-primary-rgb: 26, 15, 54;
+    --bs-secondary: #2d1b4d;        /* Violeta medio */
+    --bs-secondary-rgb: 45, 27, 77;
+    --bs-dark: #000000;             /* Negro puro */
+    --bs-dark-rgb: 0, 0, 0;
+    --bs-darker: #000000;           /* Negro puro para contraste */
+    --bs-darker-rgb: 0, 0, 0;
+    
+    /* Violetas adicionales para diferentes estados */
+    --violet-light: #6b4c9a;        /* Para hover y elementos destacados */
+    --violet-bright: #9747FF;       /* Para acentos y efectos glow */
+    --violet-dark: #140b29;         /* Para fondos oscuros */
+    
+    /* Colores de estado (sin rojo) */
+    --bs-danger: #4a1b6c;           /* Violeta para alertas/errores */
+    --bs-danger-rgb: 74, 27, 108;
+    
+    /* Fuentes del sistema */
+    --font-title: 'Nosifer', cursive;
+    --font-main: 'Poppins', sans-serif;
 }
 
-/* Reset y estilos base */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
+/* Estilos base */
 body {
-    background-color: var(--primary-dark);
-    color: var(--text-primary);
-    font-family: 'Inter', sans-serif;
-    line-height: 1.6;
-    min-height: 100vh;
+    background-color: var(--bs-darker);
+    color: #ffffff;
+    font-family: var(--font-main);
 }
 
-/* Navbar mejorado */
+/* Navbar mejorada */
 .navbar {
-    background-color: var(--secondary-dark);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding: 1rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background-color: rgba(20, 11, 41, 0.95) !important; /* Violeta muy oscuro con transparencia */
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.3);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .navbar-brand {
-    color: var(--accent-blue-light) !important;
-    font-weight: 700;
-    font-size: 1.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
-    text-decoration: none;
+    font-family: var(--font-title);
+    font-size: 2.2rem;
+    letter-spacing: 2px;
+    color: var(--violet-bright) !important;
+    text-shadow: 0 0 10px rgba(151, 71, 255, 0.5),
+                 0 0 20px rgba(151, 71, 255, 0.3);
+    padding: 0.5rem 0;
 }
 
-.navbar-brand:hover {
-    text-shadow: 0 0 10px rgba(75,93,215,0.5);
-}
-
-.navbar-links {
+/* Usuario en navbar */
+.user-profile {
+    background-color: rgba(var(--bs-primary-rgb), 0.3);
+    border: 1px solid rgba(var(--violet-bright), 0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
-}
-
-/* Botones mejorados */
-.btn {
-    padding: 0.625rem 1.25rem;
-    border-radius: 4px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Todos los botones principales ahora usan el estilo morado */
-.btn-primary,
-.navbar .btn,
-.card .btn-danger,
-.modal .btn-primary {
-    background-color: var(--purple-button);
-    border-color: var(--purple-button);
-    color: white;
-}
-
-.btn-primary:hover,
-.navbar .btn:hover,
-.card .btn-danger:hover,
-.modal .btn-primary:hover {
-    background-color: #3D1B8F;
-    border-color: #3D1B8F;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(45,11,127,0.3);
-}
-
-/* Modales mejorados */
-.modal {
-    backdrop-filter: blur(5px);
-}
-
-.modal-content {
-    background-color: var(--secondary-dark);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px;
-    box-shadow: 0 0 30px rgba(0,0,0,0.5);
-    color: var(--text-primary);
-}
-
-.modal-header {
-    border-bottom: 1px solid rgba(255,255,255,0.15);
-    padding: 1.5rem;
-}
-
-.modal-title {
-    color: var(--accent-blue-light);
-    font-weight: 600;
-    font-size: 1.5rem;
-}
-
-.modal-body {
-    padding: 2rem;
-}
-
-/* Formularios mejorados */
-.form-control,
-.form-select {
-    background-color: var(--primary-dark);
-    border: 1px solid rgba(255,255,255,0.2);
-    color: var(--text-primary);
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
+    gap: 0.75rem;
     transition: all 0.3s ease;
 }
 
-.form-control:focus,
-.form-select:focus {
-    background-color: var(--primary-dark);
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 0.25rem rgba(15,24,101,0.25);
-    color: var(--text-primary);
+.user-profile:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.4);
+    border-color: var(--violet-bright);
 }
 
-.form-label {
-    color: var(--text-primary);
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-/* Filtros mejorados */
-.form-select {
-    flex: 1;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 11l-7-7h14l-7 7z'/%3E%3C/svg%3E");
+.user-profile i {
+    color: var(--violet-bright);
+    font-size: 1.2rem;
 }
 
 /* Cards */
 .card {
-    background-color: var(--secondary-dark);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px;
+    background-color: var(--violet-dark);
+    border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
     transition: all 0.3s ease;
-    overflow: hidden;
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    border-color: var(--accent-blue);
+    box-shadow: 0 0 20px rgba(var(--bs-secondary-rgb), 0.3);
+    border-color: var(--violet-bright);
 }
 
 .card-title {
-    color: var(--accent-blue-light) !important;
+    color: var(--violet-bright) !important;
     font-weight: 600;
-    margin-bottom: 1rem;
 }
 
-.card-text {
-    color: var(--text-secondary);
+.card-subtitle {
+    color: var(--violet-light) !important;
 }
 
-/* Badge type en cards */
-.badge, .bg-danger {
-    background-color: var(--accent-blue) !important;
-    border-color: var(--accent-blue);
+/* Botones */
+.btn-primary, .btn-danger {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: #fff;
+    transition: all 0.3s ease;
 }
 
-/* Close button en modales */
-.btn-close {
-    color: var(--text-primary);
-    opacity: 0.8;
+.btn-primary:hover, .btn-danger:hover {
+    background-color: var(--violet-light);
+    border-color: var(--violet-light);
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(var(--bs-primary-rgb), 0.4);
 }
 
-.btn-close:hover {
-    opacity: 1;
+.btn-secondary {
+    background-color: var(--bs-secondary);
+    border-color: var(--bs-secondary);
 }
 
-.btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%);
+.btn-secondary:hover {
+    background-color: var(--violet-light);
+    border-color: var(--violet-light);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .navbar {
-        padding: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .navbar-brand {
-        font-size: 1.25rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .navbar-links {
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-
-    .btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-        width: auto;
-    }
-
-    .modal-content {
-        margin: 0.5rem;
-    }
-
-    .modal-body {
-        padding: 1rem;
-    }
-
-    .form-control, 
-    .form-select {
-        font-size: 16px; /* Previene zoom en iOS */
-    }
-
-    /* Ajustes para los filtros en móvil */
-    .d-flex.gap-3 {
-        flex-direction: column;
-        gap: 0.5rem !important;
-    }
-
-    .form-select {
-        width: 100%;
-    }
-
-    /* Ajustes para cards en móvil */
-    .card {
-        margin-bottom: 1rem;
-    }
-
-    .card-body {
-        padding: 1rem;
-    }
+/* Badges */
+.badge.bg-danger,
+.bg-danger {
+    background-color: var(--bs-primary) !important;
 }
 
-/* Scroll personalizado */
-::-webkit-scrollbar {
-    width: 8px;
+/* Formularios */
+.form-control,
+.form-select {
+    background-color: rgba(var(--bs-darker-rgb), 0.7) !important;
+    border: 1px solid rgba(var(--violet-bright), 0.2) !important;
+    color: #ffffff !important;
 }
 
-::-webkit-scrollbar-track {
-    background: var(--primary-dark);
+.form-control:focus,
+.form-select:focus {
+    background-color: rgba(var(--bs-darker-rgb), 0.9) !important;
+    border-color: var(--violet-bright) !important;
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25) !important;
 }
 
-::-webkit-scrollbar-thumb {
-    background: var(--accent-blue);
-    border-radius: 4px;
+/* Modales */
+.modal-content {
+    background-color: var(--violet-dark);
+    border: 1px solid rgba(var(--violet-bright), 0.2);
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--dark-blue);
+.modal-header {
+    border-bottom: 1px solid rgba(var(--violet-bright), 0.2);
+}
+
+.modal-title {
+    color: var(--violet-bright);
+    font-weight: 600;
+}
+
+/* Toasts */
+.toast {
+    background-color: var(--violet-dark);
+    border: 1px solid rgba(var(--violet-bright), 0.2);
+}
+
+/* Textos y estados */
+.text-danger {
+    color: var(--violet-bright) !important;
+}
+
+.border-danger {
+    border-color: var(--bs-primary) !important;
+}
+
+/* Spinners */
+.spinner-border {
+    color: var(--violet-bright);
 }
 
 /* Utilidades */
-.text-danger {
-    color: var(--accent-blue-light) !important;
+.border-theme {
+    border-color: rgba(var(--violet-bright), 0.2) !important;
 }
 
-.bg-dark {
-    background-color: var(--primary-dark) !important;
+/* Efectos hover globales */
+.hover-effect {
+    transition: all 0.3s ease;
 }
 
-.bg-secondary-dark {
-    background-color: var(--secondary-dark) !important;
+.hover-effect:hover {
+    color: var(--violet-bright);
+    text-shadow: 0 0 10px rgba(151, 71, 255, 0.3);
 }
 
-/* Focus states accesibles */
-*:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(15,24,101,0.5);
+/* Validación de formularios */
+.was-validated .form-control:invalid,
+.form-control.is-invalid {
+    border-color: var(--bs-danger) !important;
+    background-image: none;
 }
 
-/* Estados hover para elementos interactivos */
-a:hover, 
-button:hover {
-    text-decoration: none;
-    cursor: pointer;
-}
-
-/* Transiciones suaves globales */
-* {
-    transition: color 0.3s ease, 
-                background-color 0.3s ease, 
-                border-color 0.3s ease, 
-                box-shadow 0.3s ease, 
-                transform 0.3s ease;
-}
-
-/* Animaciones */
-@keyframes fadeIn {
-    from { 
-        opacity: 0; 
-        transform: translateY(20px); 
+/* Media queries */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.8rem;
     }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
+    
+    .user-profile {
+        padding: 0.5rem 1rem;
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
     }
 }
 
-@keyframes slideIn {
-    from { 
-        transform: translateX(-100%); 
-    }
-    to { 
-        transform: translateX(0); 
-    }
+/* Elementos de Halloween */
+.halloween-icon {
+    color: var(--violet-bright);
+    transition: all 0.3s ease;
 }
 
-.fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-}
-
-.slide-in {
-    animation: slideIn 0.3s ease-out forwards;
-}
-
-/* Loading states */
-.loading {
-    position: relative;
-    opacity: 0.7;
-}
-
-.loading::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 30px;
-    height: 30px;
-    border: 3px solid var(--accent-blue);
-    border-top-color: transparent;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { 
-        transform: rotate(360deg); 
-    }
-}
-
-/* Utilidades adicionales */
-.flex-1 {
-    flex: 1 1 0;
-}
-
-.w-100 {
-    width: 100% !important;
-}
-
-.me-2 {
-    margin-right: 0.5rem !important;
-}
-
-.me-3 {
-    margin-right: 1rem !important;
-}
-
-.mb-3 {
-    margin-bottom: 1rem !important;
-}
-
-.mb-4 {
-    margin-bottom: 1.5rem !important;
-}
-
-/* Ajustes para modales de Bootstrap */
-.modal-backdrop {
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal.fade .modal-dialog {
-    transition: transform 0.3s ease-out;
-}
-
-.modal.show .modal-dialog {
-    transform: none;
-}
-
-/* Ajustes específicos para dispositivos pequeños */
-@media (max-width: 576px) {
-    .navbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .navbar-links {
-        justify-content: center;
-    }
-
-    .modal-dialog {
-        margin: 0.5rem;
-    }
-
-    .btn {
-        width: 100%;
-        margin-bottom: 0.5rem;
-    }
-}
-
-
-.toast-container {
-    margin-top: 4.5rem; /* Espacio para el navbar */
-}
-
-.toast {
-    min-width: 250px;
-    opacity: 0.95;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.toast:hover {
-    opacity: 1;
+.halloween-icon:hover {
+    color: var(--violet-light);
+    transform: scale(1.1);
+    text-shadow: 0 0 10px rgba(151, 71, 255, 0.5);
 }
