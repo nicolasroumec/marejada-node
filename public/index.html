@@ -125,29 +125,112 @@
     </div>
 
     <!-- Modal de Registro -->
-    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content bg-dark border-theme">
-                <div class="modal-header border-theme">
-                    <h5 class="modal-title text-glow" id="registerModalLabel">
+<!-- Modal de Registro -->
+<div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark border-theme">
+            <div class="modal-header border-theme">
+                <h5 class="modal-title text-glow" id="registerModalLabel">
+                    <i class="fas fa-ghost halloween-icon me-2"></i>Registrarse
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="firstName" class="form-label">
+                            <i class="fas fa-user halloween-icon me-2"></i>Nombre
+                        </label>
+                        <input type="text" class="form-control form-control-lg bg-darker text-white border-0" 
+                               id="firstName" required>
+                        <div class="invalid-feedback">Por favor, ingresa tu nombre.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="lastName" class="form-label">
+                            <i class="fas fa-user halloween-icon me-2"></i>Apellido
+                        </label>
+                        <input type="text" class="form-control form-control-lg bg-darker text-white border-0" 
+                               id="lastName" required>
+                        <div class="invalid-feedback">Por favor, ingresa tu apellido.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope-open halloween-icon me-2"></i>Email
+                        </label>
+                        <input type="email" class="form-control form-control-lg bg-darker text-white border-0" 
+                               id="email" required>
+                        <div class="invalid-feedback">Por favor, ingresa un email válido.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-key halloween-icon me-2"></i>Contraseña
+                        </label>
+                        <input type="password" class="form-control form-control-lg bg-darker text-white border-0" 
+                               id="password" required>
+                        <div class="invalid-feedback">Por favor, ingresa una contraseña.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">
+                            <i class="fas fa-key halloween-icon me-2"></i>Confirmar Contraseña
+                        </label>
+                        <input type="password" class="form-control form-control-lg bg-darker text-white border-0" 
+                               id="confirmPassword" required>
+                        <div class="invalid-feedback">Las contraseñas deben coincidir.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="school" class="form-label">
+                            <i class="fas fa-school halloween-icon me-2"></i>Escuela
+                        </label>
+                        <input type="text" class="form-control form-control-lg bg-darker text-white border-0" 
+                               id="school" required>
+                        <div class="invalid-feedback">Por favor, ingresa tu escuela.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="year" class="form-label">
+                            <i class="fas fa-calendar halloween-icon me-2"></i>Año
+                        </label>
+                        <select class="form-control form-control-lg bg-darker text-white border-0" 
+                                id="year" required>
+                            <option value="">Seleccione el año</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                        </select>
+                        <div class="invalid-feedback">Por favor, selecciona un año.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="course" class="form-label">
+                            <i class="fas fa-book halloween-icon me-2"></i>Curso
+                        </label>
+                        <select class="form-control form-control-lg bg-darker text-white border-0" 
+                                id="course" required>
+                            <option value="">Seleccione el curso</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                        <div class="invalid-feedback">Por favor, selecciona un curso.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 btn-glow transition-all">
                         <i class="fas fa-ghost halloween-icon me-2"></i>Registrarse
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="registerForm" class="row g-3 needs-validation" novalidate>
-                        <!-- Campos del formulario se mantienen igual pero con clases actualizadas -->
-                        <!-- ... resto del formulario ... -->
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary btn-lg w-100 btn-glow transition-all">
-                                <i class="fas fa-ghost halloween-icon me-2"></i>Registrarse
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1080">
