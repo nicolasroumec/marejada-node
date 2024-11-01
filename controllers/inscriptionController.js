@@ -4,7 +4,14 @@ const inscriptionController = {
     async create(req, res) {
         try {
             const { scheduleId } = req.body;
-            const userId = req.user.userId; // Obtenido del middleware de autenticación
+            if (!scheduleId) {
+                return res.status(400).json({ message: 'scheduleId es requerido' });
+            }
+
+            const userId = req.user.userId;
+            if (!userId) {
+                return res.status(401).json({ message: 'Usuario no autenticado' });
+            }
 
             const inscription = await Inscription.create({
                 userId,
@@ -20,26 +27,37 @@ const inscriptionController = {
             
             if (error.message === 'No hay cupos disponibles' || 
                 error.message === 'Usuario ya inscrito en este horario' ||
-                error.message === 'Horario no encontrado') {
+                error.message === 'Horario no encontrado' ||
+                error.message === 'Ya estás inscrito en otro evento en este horario') {
                 return res.status(400).json({ message: error.message });
             }
 
-            res.status(500).json({ message: 'Error al procesar la inscripción' });
+            res.status(500).json({ 
+                message: 'Error al procesar la inscripción',
+                error: error.message 
+            });
         }
     },
 
     async getUserInscriptions(req, res) {
         try {
             const userId = req.user.userId;
-            const inscriptions = await Inscription.getByUserId(userId);
+            if (!userId) {
+                return res.status(401).json({ message: 'Usuario no autenticado' });
+            }
 
+            const inscriptions = await Inscription.getByUserId(userId);
+            
             res.json({
                 message: 'Inscripciones recuperadas exitosamente',
-                inscriptions
+                inscriptions: inscriptions || []
             });
         } catch (error) {
             console.error('Error al obtener inscripciones:', error);
-            res.status(500).json({ message: 'Error al obtener las inscripciones' });
+            res.status(500).json({ 
+                message: 'Error al obtener las inscripciones',
+                error: error.message 
+            });
         }
     },
 
@@ -78,6 +96,9 @@ const inscriptionController = {
             res.status(500).json({ message: 'Error al cancelar la inscripción' });
         }
     },
+
+
+    
     async getAvailableSpots(req, res) {
         try {
             const { scheduleId } = req.params;
@@ -95,6 +116,37 @@ const inscriptionController = {
         }
     }
 };
+// Función para cancelar inscripción
+async function cancelInscription(inscriptionId) {
+    if (!confirm('¿Estás seguro de que deseas cancelar esta inscripción?')) {
+        return;
+    }
 
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/inscriptions/${inscriptionId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            alert('Inscripción cancelada exitosamente');
+            // Recargar el modal con las inscripciones actualizadas
+            showUserInscriptions();
+            // Recargar los eventos disponibles
+            await loadSchedules();
+        } else {
+            const error = await response.json();
+            alert(error.message);
+        }
+    } catch (error) {
+        console.error('Error al cancelar inscripción:', error);
+        alert('Error al cancelar la inscripción');
+    }
+}
 
 export default inscriptionController;
+
+

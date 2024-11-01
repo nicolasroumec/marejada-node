@@ -255,7 +255,7 @@ function createEventCard(schedule) {
     `;
 }
 
-// Función para manejar la inscripción
+// Función actualizada para manejar la inscripción
 async function handleInscription(scheduleId) {
     try {
         const token = localStorage.getItem('token');
@@ -273,18 +273,146 @@ async function handleInscription(scheduleId) {
             body: JSON.stringify({ scheduleId })
         });
 
+        const data = await response.json();
+
         if (response.ok) {
             alert('Inscripción exitosa');
-            loadSchedules(); // Recargar los datos
+            await loadSchedules();
         } else {
-            const error = await response.json();
-            alert(error.message);
+            alert(data.message || 'Error en la inscripción');
+            console.error('Error response:', data);
         }
     } catch (error) {
         console.error('Error en la inscripción:', error);
         alert('Error al procesar la inscripción');
     }
 }
+
+// Función para actualizar la capacidad de un evento específico
+async function updateEventCapacity(scheduleId) {
+    try {
+        const response = await fetch(`/api/inscriptions/available-spots/${scheduleId}`);
+        const data = await response.json();
+        
+        // Actualizar el DOM para reflejar los nuevos cupos disponibles
+        const card = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+        if (card) {
+            const spotsElement = card.querySelector('.available-spots');
+            if (spotsElement) {
+                spotsElement.textContent = `Cupos disponibles: ${data.availableSpots}`;
+            }
+        }
+    } catch (error) {
+        console.error('Error al actualizar cupos:', error);
+    }
+}
+
+// Función actualizada para mostrar las inscripciones del usuario
+async function showUserInscriptions() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Debe iniciar sesión para ver sus inscripciones');
+            return;
+        }
+
+        const response = await fetch('/api/inscriptions/user', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Remover modal anterior si existe
+        let existingModal = document.getElementById('inscriptionsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Remover cualquier backdrop existente
+        const existingBackdrop = document.querySelector('.modal-backdrop');
+        if (existingBackdrop) {
+            existingBackdrop.remove();
+        }
+
+        // Crear el HTML del modal
+        const modalHTML = `
+            <div class="modal fade" id="inscriptionsModal" tabindex="-1" aria-labelledby="inscriptionsModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content bg-dark text-white">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="inscriptionsModalLabel">Mis Inscripciones</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${data.inscriptions && data.inscriptions.length > 0 ? `
+                                <div class="row">
+                                    ${data.inscriptions.map(inscription => `
+                                        <div class="col-12 mb-3">
+                                            <div class="card bg-secondary">
+                                                <div class="card-body">
+                                                    <h5 class="card-title text-danger">${inscription.event_name}</h5>
+                                                    <p class="card-text">
+                                                        <small>
+                                                            <strong>Fecha:</strong> ${new Date(inscription.start_time).toLocaleString()}<br>
+                                                            <strong>Ubicación:</strong> ${inscription.location}<br>
+                                                            <strong>Tipo:</strong> ${inscription.type}
+                                                        </small>
+                                                    </p>
+                                                    <button 
+                                                        onclick="cancelInscription('${inscription.inscription_id}')"
+                                                        class="btn btn-danger btn-sm">
+                                                        Cancelar Inscripción
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<p class="text-center">No tienes inscripciones activas</p>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Insertar el modal en el documento
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        // Obtener el nuevo modal
+        const modalElement = document.getElementById('inscriptionsModal');
+        
+        // Inicializar el modal de Bootstrap
+        const modal = new bootstrap.Modal(modalElement, {
+            backdrop: 'static',
+            keyboard: false
+        });
+
+        // Evento para limpiar el modal cuando se cierre
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            this.remove();
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+        });
+
+        // Mostrar el modal
+        modal.show();
+
+    } catch (error) {
+        console.error('Error al obtener inscripciones:', error);
+        alert('Error al cargar las inscripciones: ' + error.message);
+    }
+}
+
+
 
 // Función para filtrar schedules
 function filterSchedules(schedules, filters) {
