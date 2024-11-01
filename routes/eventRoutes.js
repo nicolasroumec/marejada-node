@@ -16,7 +16,7 @@ router.get('/', (req, res) => {
 router.post('/event', createEventWithSchedules);
 
 // Ruta para eliminar un evento y sus horarios asociados
-router.delete('/events/:id', deleteEventById);
+router.delete('/event/:id', deleteEventById);
 
 // Ruta para listar todos los eventos
 router.get('/get-events', getAllEvents);

@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function fetchEvents() {
-        fetch('/event/events')
+        fetch('/api/events/get-events')
             .then(response => response.json())
             .then(events => {
                 eventList.innerHTML = '';
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             capacity: capacity
         };
 
-        fetch('/event/events', {
+        fetch('/api/events/event', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
