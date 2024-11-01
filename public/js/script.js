@@ -369,6 +369,7 @@ function initializeEventListeners() {
         });
     }
 }
+
 // #endregion
 
 // #region Cards and Display
@@ -377,8 +378,10 @@ function initializeEventListeners() {
  * @param {Object} schedule - Datos del schedule
  * @returns {string} HTML de la card
  */
+// Modificar la función createEventCard para usar availableSpots
 function createEventCard(schedule) {
-    const availableSpots = schedule.capacity - (schedule.currentInscriptions || 0);
+    const availableSpots = schedule.availableSpots ?? 
+        (schedule.capacity - (schedule.currentInscriptions || 0));
     const isAvailable = availableSpots > 0;
     
     return `
@@ -405,7 +408,14 @@ function createEventCard(schedule) {
                         <p class="mb-1"><small><strong>Autor:</strong> ${schedule.event.author}</small></p>
                         <p class="mb-1"><small><strong>Ubicación:</strong> ${schedule.event.location}</small></p>
                         <p class="mb-1"><small><strong>Duración:</strong> ${schedule.event.duration}</small></p>
-                        <p class="mb-1 available-spots"><small><strong>Cupos disponibles:</strong> ${availableSpots}</small></p>
+                        <p class="mb-1 available-spots">
+                            <small>
+                                <strong>Cupos disponibles:</strong> 
+                                <span class="badge bg-${isAvailable ? 'success' : 'danger'}">
+                                    ${availableSpots}
+                                </span>
+                            </small>
+                        </p>
                     </div>
 
                     <button
@@ -449,6 +459,8 @@ function groupSchedulesByTime(schedules) {
  * Maneja el proceso de inscripción a un evento
  * @param {string} scheduleId - ID del schedule
  */
+// Modificar handleInscription para actualizar los cupos inmediatamente
+// Modificar la función handleInscription
 async function handleInscription(scheduleId) {
     try {
         const token = getAuthToken();
@@ -470,8 +482,32 @@ async function handleInscription(scheduleId) {
 
         if (response.ok) {
             showToast('Inscripción exitosa', 'success');
-            await loadSchedules();
-            await updateEventCapacity(scheduleId);
+            
+            // Actualizar el cupo disponible específico
+            const newSpots = await fetchAvailableSpots(scheduleId);
+            
+            // Actualizar la UI con el nuevo valor
+            const card = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+            if (card) {
+                const spotsElement = card.querySelector('.available-spots small');
+                if (spotsElement) {
+                    const isAvailable = newSpots > 0;
+                    spotsElement.innerHTML = `
+                        <strong>Cupos disponibles:</strong> 
+                        <span class="badge bg-${isAvailable ? 'success' : 'danger'}">
+                            ${newSpots}
+                        </span>
+                    `;
+                }
+
+                // Actualizar el botón
+                const button = card.querySelector('button');
+                if (button) {
+                    button.className = `btn w-100 ${isAvailable ? 'btn-danger' : 'btn-secondary'}`;
+                    button.disabled = !isAvailable;
+                    button.textContent = isAvailable ? 'INSCRIBIRSE' : 'AGOTADO';
+                }
+            }
         } else {
             showToast(data.message || 'Error en la inscripción', 'error');
         }
@@ -539,11 +575,45 @@ async function showUserInscriptions() {
         showToast('Error al cargar las inscripciones: ' + error.message, 'error');
     }
 }
-
+// Función para obtener todos los cupos disponibles actuales
+async function fetchAllAvailableSpots() {
+    try {
+        const response = await fetch('/api/inscriptions/all-available-spots', {
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error al obtener cupos disponibles:', error);
+        return null;
+    }
+}
+// Función para obtener los cupos disponibles
+async function fetchAvailableSpots(scheduleId) {
+    try {
+        const response = await fetch(`/api/inscriptions/available-spots/${scheduleId}`);
+        if (!response.ok) {
+            throw new Error('Error al obtener cupos disponibles');
+        }
+        const data = await response.json();
+        return data.availableSpots;
+    } catch (error) {
+        console.error('Error al obtener cupos:', error);
+        return null;
+    }
+}
 /**
  * Cancela una inscripción
  * @param {string} scheduleId - ID del schedule
  */
+// Modificar la función cancelInscription
 async function cancelInscription(scheduleId) {
     if (!confirm('¿Estás seguro de que deseas cancelar esta inscripción?')) {
         return;
@@ -569,16 +639,16 @@ async function cancelInscription(scheduleId) {
         const modal = bootstrap.Modal.getInstance(document.getElementById('inscriptionsModal'));
         if (modal) modal.hide();
         
-        setTimeout(async () => {
-            await loadSchedules();
-            await showUserInscriptions();
-        }, 500);
+        // Actualizar la vista después de cancelar
+        await loadSchedules();
+        await showUserInscriptions();
         
     } catch (error) {
         console.error('Error al cancelar la inscripción:', error);
         showToast(error.message || 'Error al cancelar la inscripción', 'error');
     }
 }
+
 // #endregion
 
 // #region Filters and Visualization
@@ -596,8 +666,21 @@ function filterSchedules(schedules, searchTerm) {
     if (!searchTerm) return schedules;
     
     return schedules.filter(schedule => 
-        schedule.event.name.toLowerCase().includes(searchTerm.toLowerCase())
+        schedule.event.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
     );
+}
+
+/**
+ * Formatea la hora para mostrar AM/PM
+ * @param {string} time - Hora en formato HH:mm
+ * @returns {string} Hora formateada
+ */
+function formatTime(time) {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes} ${ampm}`;
 }
 
 /**
@@ -623,53 +706,111 @@ function groupSchedulesByTime(schedules) {
 }
 
 /**
+ * Crea el encabezado de tiempo con estilo de tarjeta
+ * @param {string} time - Hora del grupo
+ * @returns {string} HTML del encabezado
+ */
+function createTimeHeader(time) {
+    return `
+        <div class="card bg-primary text-white mb-4 w-auto d-inline-block">
+            <div class="card-body py-2 px-4">
+                <h3 class="card-title mb-0 text-center">
+                    <i class="fas fa-clock me-2"></i>${formatTime(time)}
+                </h3>
+            </div>
+        </div>
+    `;
+}
+
+/**
  * Carga y muestra los schedules filtrados
  */
+
+// Modificar la función loadSchedules
 async function loadSchedules() {
-    const schedules = await fetchSchedules();
-    const filteredSchedules = filterSchedules(schedules, filters.searchTerm);
-    const groupedSchedules = groupSchedulesByTime(filteredSchedules);
-    
-    const eventsGrid = document.getElementById('eventsGrid');
-    eventsGrid.innerHTML = '';
+    try {
+        // Obtener los schedules
+        const schedules = await fetchSchedules();
+        console.log('Schedules originales:', schedules);
 
-    if (Object.keys(groupedSchedules).length === 0) {
-        eventsGrid.innerHTML = `
-            <div class="col-12 text-center text-white">
-                <h4>No se encontraron eventos</h4>
-            </div>
-        `;
-        return;
+        // Obtener los cupos disponibles para cada schedule
+        const schedulesWithSpots = await Promise.all(
+            schedules.map(async schedule => {
+                const availableSpots = await fetchAvailableSpots(schedule.scheduleId);
+                return {
+                    ...schedule,
+                    availableSpots: availableSpots !== null ? availableSpots : 
+                        (schedule.capacity - (schedule.currentInscriptions || 0))
+                };
+            })
+        );
+
+        console.log('Schedules con cupos actualizados:', schedulesWithSpots);
+        
+        // Filtrar y agrupar los schedules
+        const filteredSchedules = filterSchedules(schedulesWithSpots, filters.searchTerm);
+        const groupedSchedules = groupSchedulesByTime(filteredSchedules);
+        
+        // Renderizar los schedules
+        const eventsGrid = document.getElementById('eventsGrid');
+        eventsGrid.innerHTML = '';
+
+        if (Object.keys(groupedSchedules).length === 0) {
+            eventsGrid.innerHTML = `
+                <div class="col-12 text-center text-white">
+                    <h4>No se encontraron eventos</h4>
+                </div>
+            `;
+            return;
+        }
+
+        // Mostrar eventos agrupados por tiempo
+        Object.entries(groupedSchedules).forEach(([time, schedules]) => {
+            const timeSection = document.createElement('div');
+            timeSection.className = 'col-12 mb-5';
+            
+            timeSection.innerHTML = `
+                <div class="mb-4">
+                    ${createTimeHeader(time)}
+                </div>
+                <div class="row g-4">
+                    ${schedules.map(schedule => createEventCard(schedule)).join('')}
+                </div>
+            `;
+            
+            eventsGrid.appendChild(timeSection);
+        });
+    } catch (error) {
+        console.error('Error al cargar schedules:', error);
+        showToast('Error al cargar los eventos', 'error');
     }
-
-    // Mostrar eventos agrupados por tiempo
-    Object.entries(groupedSchedules).forEach(([time, schedules]) => {
-        const timeSection = document.createElement('div');
-        timeSection.className = 'col-12 mb-5';
-        timeSection.innerHTML = `
-            <h3 class="text-white mb-4">Horario: ${time}</h3>
-            <div class="row g-4">
-                ${schedules.map(schedule => createEventCard(schedule)).join('')}
-            </div>
-        `;
-        eventsGrid.appendChild(timeSection);
-    });
 }
 
 // Inicializar event listeners para el filtro de búsqueda
 function initializeFilterListeners() {
     const searchInput = document.getElementById('searchInput');
+    if (!searchInput) return;
+
+    console.log('Inicializando listener de búsqueda'); // Debug
 
     // Búsqueda en tiempo real con debounce
     let searchTimeout;
     searchInput.addEventListener('input', (e) => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
+            console.log('Valor de búsqueda:', e.target.value); // Debug
             filters.searchTerm = e.target.value.trim();
             loadSchedules();
         }, 300);
     });
 }
+
+// Asegurarse de que se inicialicen los listeners cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Cargado - Inicializando filtros'); // Debug
+    initializeFilterListeners();
+    loadSchedules();
+});
 // #endregion
 
 // #region Initialization
