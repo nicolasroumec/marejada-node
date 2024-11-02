@@ -26,9 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/api/events/get-events')
             .then(response => response.json())
             .then(data => {
-                console.log("Datos recibidos:", data); // Verifica la estructura aquí
-    
-                // Accede a `data.data` si los eventos están anidados bajo esa propiedad
                 const events = Array.isArray(data.data) ? data.data : null;
     
                 if (!events) {
@@ -39,14 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 events.forEach(event => {
                     const eventElement = document.createElement('div');
                     eventElement.className = 'event-item';
-                    
-                    // Crear el HTML para los horarios
+    
                     const schedulesHtml = event.schedules && event.schedules.length > 0
-                        ? event.schedules.map(schedule => 
-                            `<li>Hora: ${formatTime(schedule.start_time)} - Capacidad: ${schedule.capacity} personas</li>`
-                          ).join('')
+                        ? event.schedules.map(schedule => `
+                            <li>
+                                Hora: ${formatTime(schedule.start_time)} - Capacidad: ${schedule.capacity} personas
+                                <button class="view-inscriptions-btn" data-schedule-id="${schedule.id}">Ver inscripciones</button>
+                            </li>
+                        `).join('')
                         : '<li>No hay horarios disponibles</li>';
-                    
+    
                     eventElement.innerHTML = `
                         <div class="event-header">
                             <span>${event.name}</span>
@@ -66,7 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                     eventList.appendChild(eventElement);
-                    
+    
+                    // Toggle para mostrar/ocultar detalles del evento
                     const header = eventElement.querySelector('.event-header');
                     const details = eventElement.querySelector('.event-details');
                     header.addEventListener('click', (e) => {
@@ -75,10 +75,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 });
+    
+                // Agrega el listener al botón de ver inscripciones
+                document.querySelectorAll('.view-inscriptions-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const scheduleId = this.getAttribute('data-schedule-id');
+                        fetchScheduleInscriptions(scheduleId);
+                    });
+                });
+    
                 addDeleteEventListeners();
             })
             .catch(error => console.error('Error:', error));
-    }   
+    }
 
     function formatTime(timeString) {
         if (!timeString) return 'N/A';
@@ -106,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function deleteEvent(eventId) {
-        fetch(`/event/events/${eventId}`, { method: 'DELETE' })
+        fetch(`/api/events/event/${eventId}`, { method: 'DELETE' })
             .then(response => response.json())
             .then(data => {
                 console.log(data.message);
@@ -189,4 +198,24 @@ document.addEventListener('DOMContentLoaded', () => {
             schedules.removeChild(container);
         });
     });
+
+    function fetchScheduleInscriptions(scheduleId) {
+        fetch(`/api/inscriptions/schedule/${scheduleId}`)
+            .then(response => response.json())
+            .then(data => {
+                const inscriptions = data.inscriptions;
+                let inscriptionsHtml = '';
+    
+                if (inscriptions && inscriptions.length > 0) {
+                    inscriptionsHtml = inscriptions.map(inscription => `
+                        <li>${inscription.first_name} ${inscription.last_name} - ${inscription.school} - Año: ${inscription.year} - Curso: ${inscription.course}</li>
+                    `).join('');
+                } else {
+                    inscriptionsHtml = '<li>No hay inscripciones en este horario</li>';
+                }
+    
+                alert(`Inscripciones para el horario:\n${inscriptionsHtml}`);
+            })
+            .catch(error => console.error('Error al obtener inscripciones:', error));
+    }
 });

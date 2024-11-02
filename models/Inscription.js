@@ -4,61 +4,59 @@ import nodemailer from 'nodemailer';
 
 class Inscription {
     static async create({ userId, scheduleId }) {
-        const connection = await pool.getConnection();
-        
+        const connection = await pool.connect();
+
         try {
-            await connection.beginTransaction();
-    
+            await connection.query('BEGIN');
+
             // Verificar conflicto de horario
-            const [timeConflict] = await connection.query(`
+            const { rows: timeConflict } = await connection.query(`
                 SELECT i.id 
                 FROM inscriptions i
                 JOIN schedules s1 ON i.schedule_id = s1.id
-                JOIN schedules s2 ON s2.id = ?
-                WHERE i.user_id = ? 
+                JOIN schedules s2 ON s2.id = $1
+                WHERE i.user_id = $2 
                 AND s1.start_time = s2.start_time
             `, [scheduleId, userId]);
-    
+
             if (timeConflict && timeConflict.length > 0) {
                 throw new Error('Ya estás inscrito en otro evento en este horario');
             }
-    
+
             // Verificar cupo disponible
-            const [capacityCheckResult] = await connection.query(`
+            const { rows: capacityCheckResult } = await connection.query(`
                 SELECT s.capacity, COUNT(i.id) AS current_inscriptions
                 FROM schedules s
                 LEFT JOIN inscriptions i ON s.id = i.schedule_id
-                WHERE s.id = ?
+                WHERE s.id = $1
                 GROUP BY s.capacity
             `, [scheduleId]);
-    
+
             if (!capacityCheckResult || capacityCheckResult.length === 0) {
                 throw new Error('Horario no encontrado');
             }
-    
-            // Acceder a los datos de capacidad y cantidad de inscripciones actuales
+
             const { capacity, current_inscriptions } = capacityCheckResult[0];
-    
+
             if (parseInt(current_inscriptions) >= capacity) {
                 throw new Error('No hay cupos disponibles');
             }
-    
+
             // Crear inscripción
-            const [result] = await connection.query(
-                'INSERT INTO inscriptions (user_id, schedule_id) VALUES (?, ?)',
+            const { rows: result } = await connection.query(
+                'INSERT INTO inscriptions (user_id, schedule_id) VALUES ($1, $2) RETURNING *',
                 [userId, scheduleId]
             );
-    
-            // Confirmar la transacción
-            await connection.commit();
-            return result;
+
+            await connection.query('COMMIT');
+            return result[0];
         } catch (error) {
-            await connection.rollback();
+            await connection.query('ROLLBACK');
             throw error;
         } finally {
             connection.release();
         }
-    }    
+    }   
 
     static async sendConfirmationEmail(info) {
         // Solo intentar enviar email si están configuradas las credenciales
@@ -120,35 +118,35 @@ class Inscription {
     // }
 
     // En Inscription.js, ajusta el getByUserId:
-static async getByUserId(userId) {
-    try {
-        const [inscriptions] = await pool.query(`
- SELECT 
-    i.id as inscription_id,
-    s.id as schedule_id,
-    e.name as event_name,
-    e.description,
-    e.location,
-    e.type,
-    e.duration,
-    s.start_time as event_time,
-    s.capacity
-FROM inscriptions i
-JOIN schedules s ON i.schedule_id = s.id
-JOIN events e ON s.event_id = e.id
-WHERE i.user_id = ?
-ORDER BY s.start_time
-        `, [userId]);
+    static async getByUserId(userId) {
+        try {
+            const { rows: inscriptions } = await pool.query(`
+                SELECT 
+                    i.id as inscription_id,
+                    s.id as schedule_id,
+                    e.name as event_name,
+                    e.description,
+                    e.location,
+                    e.type,
+                    e.duration,
+                    s.start_time as event_time,
+                    s.capacity
+                FROM inscriptions i
+                JOIN schedules s ON i.schedule_id = s.id
+                JOIN events e ON s.event_id = e.id
+                WHERE i.user_id = $1
+                ORDER BY s.start_time
+            `, [userId]);
 
-        return inscriptions;
-    } catch (error) {
-        throw error;
+            return inscriptions;
+        } catch (error) {
+            throw error;
+        }
     }
-}
 
     static async getByScheduleId(scheduleId) {
         try {
-            const [inscriptions] = await pool.query(`
+            const { rows: inscriptions } = await pool.query(`
                 SELECT 
                     i.id as inscription_id,
                     u.id as user_id,
@@ -157,7 +155,7 @@ ORDER BY s.start_time
                     u.email
                 FROM inscriptions i
                 JOIN users u ON i.user_id = u.id
-                WHERE i.schedule_id = ?
+                WHERE i.schedule_id = $1
             `, [scheduleId]);
 
             return inscriptions;
@@ -168,16 +166,16 @@ ORDER BY s.start_time
 
     static async delete(userId, scheduleId) {
         try {
-            const [result] = await pool.query(
-                'DELETE FROM inscriptions WHERE user_id = ? AND schedule_id = ?',
+            const { rowCount } = await pool.query(
+                'DELETE FROM inscriptions WHERE user_id = $1 AND schedule_id = $2',
                 [userId, scheduleId]
             );
 
-            if (result.affectedRows === 0) {
+            if (rowCount === 0) {
                 throw new Error('Inscripción no encontrada');
             }
 
-            return result;
+            return rowCount;
         } catch (error) {
             throw error;
         }
@@ -185,11 +183,11 @@ ORDER BY s.start_time
 
     static async getAvailableSpots(scheduleId) {
         try {
-            const [result] = await pool.query(`
+            const { rows: result } = await pool.query(`
                 SELECT s.capacity - COUNT(i.id) AS available_spots
                 FROM schedules s
                 LEFT JOIN inscriptions i ON s.id = i.schedule_id
-                WHERE s.id = ?
+                WHERE s.id = $1
                 GROUP BY s.capacity
             `, [scheduleId]);
 
