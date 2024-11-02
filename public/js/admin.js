@@ -26,17 +26,18 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/api/events/get-events')
             .then(response => response.json())
             .then(data => {
+                console.log("Datos recibidos:", data);
                 const events = Array.isArray(data.data) ? data.data : null;
-    
+
                 if (!events) {
                     throw new Error("La respuesta no es un array de eventos");
                 }
-    
+
                 eventList.innerHTML = '';
                 events.forEach(event => {
                     const eventElement = document.createElement('div');
                     eventElement.className = 'event-item';
-    
+
                     const schedulesHtml = event.schedules && event.schedules.length > 0
                         ? event.schedules.map(schedule => `
                             <li>
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </li>
                         `).join('')
                         : '<li>No hay horarios disponibles</li>';
-    
+
                     eventElement.innerHTML = `
                         <div class="event-header">
                             <span>${event.name}</span>
@@ -65,8 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                     eventList.appendChild(eventElement);
-    
-                    // Toggle para mostrar/ocultar detalles del evento
+
                     const header = eventElement.querySelector('.event-header');
                     const details = eventElement.querySelector('.event-details');
                     header.addEventListener('click', (e) => {
@@ -75,18 +75,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 });
-    
-                // Agrega el listener al botón de ver inscripciones
+
+                // Agregar listeners al botón de ver inscripciones
                 document.querySelectorAll('.view-inscriptions-btn').forEach(button => {
                     button.addEventListener('click', function() {
                         const scheduleId = this.getAttribute('data-schedule-id');
-                        fetchScheduleInscriptions(scheduleId);
+                        openInscriptionsPage(scheduleId);
                     });
                 });
-    
+
                 addDeleteEventListeners();
             })
             .catch(error => console.error('Error:', error));
+    }
+
+    // Función para abrir la página de inscripciones en una nueva pestaña
+    function openInscriptionsPage(scheduleId) {
+        const url = `/inscriptions.html?scheduleId=${scheduleId}`;
+        window.open(url, '_blank'); // Abre en una nueva pestaña
     }
 
     function formatTime(timeString) {
@@ -126,15 +132,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     eventForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        
+
         const scheduleInputs = document.querySelectorAll('.schedule-container');
         const capacity = parseInt(document.getElementById('capacity').value);
-        
+
         if (!capacity || capacity <= 0) {
             alert('La capacidad debe ser un número mayor que 0');
             return;
         }
-        
+
         const schedulesList = Array.from(scheduleInputs).map(container => ({
             startTime: container.querySelector('.schedule-time').value,
             capacity: capacity
@@ -169,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Success:', data);
             alert('Evento creado exitosamente');
             eventForm.reset();
-            
+
             const scheduleContainers = document.querySelectorAll('.schedule-container');
             scheduleContainers.forEach((container, index) => {
                 if (index > 0) { 
@@ -198,24 +204,4 @@ document.addEventListener('DOMContentLoaded', () => {
             schedules.removeChild(container);
         });
     });
-
-    function fetchScheduleInscriptions(scheduleId) {
-        fetch(`/api/inscriptions/schedule/${scheduleId}`)
-            .then(response => response.json())
-            .then(data => {
-                const inscriptions = data.inscriptions;
-                let inscriptionsHtml = '';
-    
-                if (inscriptions && inscriptions.length > 0) {
-                    inscriptionsHtml = inscriptions.map(inscription => `
-                        <li>${inscription.first_name} ${inscription.last_name} - ${inscription.school} - Año: ${inscription.year} - Curso: ${inscription.course}</li>
-                    `).join('');
-                } else {
-                    inscriptionsHtml = '<li>No hay inscripciones en este horario</li>';
-                }
-    
-                alert(`Inscripciones para el horario:\n${inscriptionsHtml}`);
-            })
-            .catch(error => console.error('Error al obtener inscripciones:', error));
-    }
 });
