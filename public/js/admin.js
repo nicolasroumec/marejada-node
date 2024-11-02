@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para abrir la página de inscripciones en una nueva pestaña
     function openInscriptionsPage(scheduleId) {
-        const url = `/inscriptions.html?scheduleId=${scheduleId}`;
+        const url = `/showInscriptions.html?scheduleId=${scheduleId}`;
         window.open(url, '_blank'); // Abre en una nueva pestaña
     }
 
