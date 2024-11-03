@@ -33,7 +33,7 @@ const router = express.Router();
 router.post('/', authMiddleware, inscriptionController.create);
 router.get('/user', authMiddleware, inscriptionController.getUserInscriptions);
 router.get('/schedule/:scheduleId', inscriptionController.getScheduleInscriptions);
-router.delete('/:scheduleId', inscriptionController.cancelInscription);
+router.delete('/:scheduleId', authMiddleware, inscriptionController.cancelInscription);
 
 // Ruta pública
 router.get('/available-spots/:scheduleId', inscriptionController.getAvailableSpots);
