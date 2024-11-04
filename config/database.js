@@ -10,7 +10,9 @@ console.log('Database Config:', {
   user: process.env.DB_USER,
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT
+  port: process.env.DB_PORT,
+  ssl: true // No mostramos la contraseña en el log
+
 });
 
 const pool = new Pool({
@@ -19,20 +21,36 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
-  max: 10, // Similar a connectionLimit en MySQL
-  idleTimeoutMillis: 30000, // Tiempo máximo de inactividad antes de cerrar la conexión
-  connectionTimeoutMillis: 2000 // Tiempo máximo de espera para establecer una nueva conexión
+  ssl: {
+    rejectUnauthorized: false // Necesario para desarrollo
+  },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000
 });
 
 async function testConnection() {
+  let client;
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
     console.log('Conexión exitosa a la base de datos');
+    
+    // Verificar que podemos hacer una consulta
+    const result = await client.query('SELECT NOW()');
+    console.log('Consulta de prueba exitosa:', result.rows[0]);
+    
     client.release();
   } catch (err) {
-    console.error('Error al conectar a la base de datos', err);
+    console.error('Error al conectar a la base de datos:', {
+      message: err.message,
+      code: err.code,
+      detail: err.detail
+    });
+    if (client) client.release();
+    throw err;
   }
 }
+
 
 // Agregamos un manejador de errores para el pool
 pool.on('error', (err) => {

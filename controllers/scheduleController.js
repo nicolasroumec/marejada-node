@@ -10,7 +10,12 @@ export const getAllScheduleCards = async (req, res) => {
 
         res.status(200).json(scheduleCards);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching schedule cards', error: error.message });
+        console.error('Error detallado:', error); // Agregamos este log
+        res.status(500).json({ 
+            message: 'Error fetching schedule cards', 
+            error: error.message,
+            stack: error.stack // Agregamos el stack trace
+        });
     }
 };
 
