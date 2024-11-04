@@ -152,7 +152,10 @@ class Inscription {
                     u.id as user_id,
                     u.first_name,
                     u.last_name,
-                    u.email
+                    u.email,
+                    u.school,
+                    u.year,
+                    u.course
                 FROM inscriptions i
                 JOIN users u ON i.user_id = u.id
                 WHERE i.schedule_id = $1
@@ -200,6 +203,29 @@ class Inscription {
             throw error;
         }
     }
+
+    static async getScheduleWithEventInfo(scheduleId) {
+        try {
+            const { rows } = await pool.query(`
+                SELECT 
+                    s.start_time,
+                    e.name AS event_name
+                FROM schedules s
+                JOIN events e ON s.event_id = e.id
+                WHERE s.id = $1
+            `, [scheduleId]);
+    
+            // Verifica si se encontró un resultado
+            if (rows.length === 0) {
+                throw new Error('Schedule no encontrado');
+            }
+    
+            return rows[0]; // Devuelve el primer resultado
+        } catch (error) {
+            throw error;
+        }
+    }
+    
 }
 
 // Asegúrate de tener esta línea al final del archivo

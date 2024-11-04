@@ -37,6 +37,7 @@ router.delete('/:scheduleId', authMiddleware, inscriptionController.cancelInscri
 
 // Ruta pública
 router.get('/available-spots/:scheduleId', inscriptionController.getAvailableSpots);
+router.get('/schedules-events/:scheduleId', inscriptionController.getScheduleWithEventInfo);
 
 export default router;
 

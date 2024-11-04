@@ -97,8 +97,6 @@ const inscriptionController = {
         }
     },
     
-
-    
     async getAvailableSpots(req, res) {
         try {
             const { scheduleId } = req.params;
@@ -113,6 +111,29 @@ const inscriptionController = {
                 return res.status(404).json({ message: error.message });
             }
             res.status(500).json({ message: 'Error al obtener los cupos disponibles' });
+        }
+    },
+
+    async getScheduleWithEventInfo(req, res) {
+        try {
+            const { scheduleId } = req.params;
+            const scheduleInfo = await Inscription.getScheduleWithEventInfo(scheduleId);
+
+            res.json({
+                message: 'Información del schedule recuperada exitosamente',
+                scheduleInfo
+            });
+        } catch (error) {
+            console.error('Error al obtener información del schedule:', error);
+            
+            if (error.message === 'Schedule no encontrado') {
+                return res.status(404).json({ message: error.message });
+            }
+
+            res.status(500).json({ 
+                message: 'Error al obtener la información del schedule',
+                error: error.message 
+            });
         }
     }
 };
