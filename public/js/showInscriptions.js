@@ -25,6 +25,7 @@ function fetchAndRenderInscriptions() {
             const inscriptionList = document.getElementById('inscriptionList');
             const inscriptions = data.inscriptions;
 
+
             if (inscriptions && inscriptions.length > 0) {
                 inscriptions.forEach(inscription => {
                     const listItem = document.createElement('li');
@@ -41,3 +42,4 @@ function fetchAndRenderInscriptions() {
 // Llamadas a las funciones para cargar el título y las inscripciones
 fetchAndRenderTitle();
 fetchAndRenderInscriptions();
+
