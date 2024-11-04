@@ -433,6 +433,18 @@ body {
     }
 }
 
+/* Media queries para ajustes menores */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.4rem;
+    }
+    
+    .navbar-collapse {
+        left: 0; /* En móvil, el menú ocupa todo el ancho */
+        width: auto;
+    }
+}
+
 
 @media (max-width: 768px) {
     .navbar {
