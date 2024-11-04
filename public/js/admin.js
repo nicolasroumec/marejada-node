@@ -26,27 +26,27 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/api/events/get-events')
             .then(response => response.json())
             .then(data => {
-                console.log("Datos recibidos:", data); // Verifica la estructura aquí
-    
-                // Accede a `data.data` si los eventos están anidados bajo esa propiedad
+                console.log("Datos recibidos:", data);
                 const events = Array.isArray(data.data) ? data.data : null;
-    
+
                 if (!events) {
                     throw new Error("La respuesta no es un array de eventos");
                 }
-    
+
                 eventList.innerHTML = '';
                 events.forEach(event => {
                     const eventElement = document.createElement('div');
                     eventElement.className = 'event-item';
-                    
-                    // Crear el HTML para los horarios
+
                     const schedulesHtml = event.schedules && event.schedules.length > 0
-                        ? event.schedules.map(schedule => 
-                            `<li>Hora: ${formatTime(schedule.start_time)} - Capacidad: ${schedule.capacity} personas</li>`
-                          ).join('')
+                        ? event.schedules.map(schedule => `
+                            <li>
+                                Hora: ${formatTime(schedule.start_time)} - Capacidad: ${schedule.capacity} personas
+                                <button class="view-inscriptions-btn" data-schedule-id="${schedule.id}">Ver inscripciones</button>
+                            </li>
+                        `).join('')
                         : '<li>No hay horarios disponibles</li>';
-                    
+
                     eventElement.innerHTML = `
                         <div class="event-header">
                             <span>${event.name}</span>
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                     eventList.appendChild(eventElement);
-                    
+
                     const header = eventElement.querySelector('.event-header');
                     const details = eventElement.querySelector('.event-details');
                     header.addEventListener('click', (e) => {
@@ -75,10 +75,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 });
+
+                // Agregar listeners al botón de ver inscripciones
+                document.querySelectorAll('.view-inscriptions-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const scheduleId = this.getAttribute('data-schedule-id');
+                        openInscriptionsPage(scheduleId);
+                    });
+                });
+
                 addDeleteEventListeners();
             })
             .catch(error => console.error('Error:', error));
-    }   
+    }
+
+    // Función para abrir la página de inscripciones en una nueva pestaña
+    function openInscriptionsPage(scheduleId) {
+        const url = `/showInscriptions.html?scheduleId=${scheduleId}`;
+        window.open(url, '_blank'); // Abre en una nueva pestaña
+    }
 
     function formatTime(timeString) {
         if (!timeString) return 'N/A';
@@ -106,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function deleteEvent(eventId) {
-        fetch(`/event/events/${eventId}`, { method: 'DELETE' })
+        fetch(`/api/events/event/${eventId}`, { method: 'DELETE' })
             .then(response => response.json())
             .then(data => {
                 console.log(data.message);
@@ -117,15 +132,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     eventForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        
+
         const scheduleInputs = document.querySelectorAll('.schedule-container');
         const capacity = parseInt(document.getElementById('capacity').value);
-        
+
         if (!capacity || capacity <= 0) {
             alert('La capacidad debe ser un número mayor que 0');
             return;
         }
-        
+
         const schedulesList = Array.from(scheduleInputs).map(container => ({
             startTime: container.querySelector('.schedule-time').value,
             capacity: capacity
@@ -160,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Success:', data);
             alert('Evento creado exitosamente');
             eventForm.reset();
-            
+
             const scheduleContainers = document.querySelectorAll('.schedule-container');
             scheduleContainers.forEach((container, index) => {
                 if (index > 0) { 

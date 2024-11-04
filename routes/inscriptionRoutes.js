@@ -32,7 +32,7 @@ const router = express.Router();
 // Rutas protegidas con autenticación
 router.post('/', authMiddleware, inscriptionController.create);
 router.get('/user', authMiddleware, inscriptionController.getUserInscriptions);
-router.get('/schedule/:scheduleId', authMiddleware, inscriptionController.getScheduleInscriptions);
+router.get('/schedule/:scheduleId', inscriptionController.getScheduleInscriptions);
 router.delete('/:scheduleId', authMiddleware, inscriptionController.cancelInscription);
 
 // Ruta pública
