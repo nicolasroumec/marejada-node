@@ -28,51 +28,67 @@ function showToast(message, type = 'success') {
 // #endregion
 
 // #region Error Handling
-const ErrorTypes = {
-    AUTH: 'auth',
-    NETWORK: 'network',
-    VALIDATION: 'validation',
-    SERVER: 'server'
-};
-
-function handleError(error) {
+const handleError = (error) => {
     console.error('Error:', error);
     
-    if (error.status === 401) {
+    // Si es un error de autenticación, manejar específicamente
+    if (error.message.includes('sesión')) {
         clearAuth();
         handleNotAuthenticated();
-        showToast('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
+        showToast(error.message, 'warning');
         return;
     }
     
-    if (!navigator.onLine) {
+    // Si es un error de conexión, mostrar mensaje específico
+    if (!navigator.onLine || error.message.includes('conexión')) {
         showToast('Error de conexión. Por favor, verifica tu internet.', 'error');
         return;
     }
     
     showToast(error.message || 'Ha ocurrido un error. Por favor, intenta nuevamente.', 'error');
-}
-
+};
 // #endregion
 
 // #region Notifications
 const NotificationService = {
     async sendEmailNotification(userId, eventData) {
+        // Si el servicio de notificaciones no está disponible, no intentar enviar
+        if (!this.isServiceAvailable) {
+            return;
+        }
+
         try {
-            await ApiClient.request('/notifications/email', {
+            const response = await fetch('/api/notifications/email', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getAuthToken()}`
+                },
                 body: JSON.stringify({
                     userId,
                     eventData,
                     type: 'inscription'
                 })
             });
+
+            if (response.status === 404) {
+                this.isServiceAvailable = false;
+                console.warn('Servicio de notificaciones no disponible');
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Error al enviar notificación');
+            }
         } catch (error) {
-            console.error('Error sending email notification:', error);
-            // No mostramos el error al usuario ya que es una funcionalidad secundaria
+            console.warn('Error al enviar notificación:', error);
         }
-    }
+    },
+    
+    isServiceAvailable: true // Flag para controlar disponibilidad del servicio
 };
+
+
 
 // #endregion
 
@@ -186,6 +202,28 @@ function handleNotAuthenticated() {
 async function fetchSchedules() {
     try {
         const data = await ApiClient.request('/schedules/schedule-cards');
+        
+        // Si el usuario está autenticado, verificar inscripciones
+        const token = getAuthToken();
+        if (token) {
+            try {
+                // Obtener las inscripciones del usuario
+                const inscriptionsData = await ApiClient.request('/inscriptions/user');
+                const userInscriptions = new Set(
+                    inscriptionsData.inscriptions?.map(insc => insc.schedule_id) || []
+                );
+                
+                // Marcar los eventos donde el usuario está inscrito
+                return data.map(schedule => ({
+                    ...schedule,
+                    userInscribed: userInscriptions.has(schedule.scheduleId)
+                }));
+            } catch (error) {
+                console.warn('Error al verificar inscripciones:', error);
+                return data;
+            }
+        }
+        
         return data;
     } catch (error) {
         console.error('Error al obtener schedules:', error);
@@ -193,7 +231,6 @@ async function fetchSchedules() {
         return [];
     }
 }
-
 
 /**
  * Actualiza la capacidad de un evento específico
@@ -363,20 +400,23 @@ Facilita el testing y los mocks:
 
  */
 
-    
 const ApiClient = {
     baseUrl: '/api',
     
     async request(endpoint, options = {}) {
-        const token = getAuthToken();
-        const defaultOptions = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            }
-        };
-        
         try {
+            const token = getAuthToken();
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                }
+            };
+            
+            // Mostrar spinner durante la petición
+            const spinner = document.getElementById('loadingSpinner');
+            if (spinner) spinner.classList.remove('d-none');
+            
             const response = await fetch(`${this.baseUrl}${endpoint}`, {
                 ...defaultOptions,
                 ...options,
@@ -386,46 +426,76 @@ const ApiClient = {
                 }
             });
             
-            const data = await response.json();
+            const data = await response.json().catch(() => ({}));
+            
+            // Ocultar spinner después de la petición
+            if (spinner) spinner.classList.add('d-none');
             
             if (!response.ok) {
-                throw { 
-                    ...data, 
-                    status: response.status,
-                    statusText: response.statusText
-                };
+                // Manejar errores específicos
+                switch (response.status) {
+                    case 400:
+                        throw new Error(data.message || 'Error en la solicitud. Por favor, verifica los datos.');
+                    case 401:
+                        clearAuth();
+                        handleNotAuthenticated();
+                        throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+                    case 404:
+                        throw new Error(data.message || 'Recurso no encontrado.');
+                    case 409:
+                        throw new Error(data.message || 'Conflicto con la operación solicitada.');
+                    default:
+                        throw new Error(data.message || 'Error en el servidor. Por favor, intenta más tarde.');
+                }
             }
             
             return data;
         } catch (error) {
-            // No manejar el error aquí para permitir manejo específico en cada caso
+            // Ocultar spinner en caso de error
+            const spinner = document.getElementById('loadingSpinner');
+            if (spinner) spinner.classList.add('d-none');
+            
+            // Manejar errores de red
+            if (!navigator.onLine) {
+                throw new Error('Error de conexión. Por favor, verifica tu internet.');
+            }
+            
             throw error;
         }
     }
 };
-
-// Función para actualizar la UI después de una inscripción
-async function updateUIAfterInscription(scheduleId) {
-    try {
-        const card = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
-        if (!card) return;
-
-        // Actualizar cupos disponibles
-        const availableSpots = await fetchAvailableSpots(scheduleId);
-        if (typeof availableSpots === 'number') {
-            const spotsElement = card.querySelector('.available-spots span');
-            if (spotsElement) {
-                const isAvailable = availableSpots > 0;
-                spotsElement.className = `badge bg-${isAvailable ? 'success' : 'danger'}`;
-                spotsElement.textContent = `${availableSpots} cupos`;
-            }
+// Mejorar el manejo de errores en ApiClient
+const ErrorHandler = {
+    isNetworkError(error) {
+        return !navigator.onLine || error instanceof TypeError;
+    },
+    
+    async handleApiError(error, response) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        switch (response.status) {
+            case 400:
+                if (errorData.code === 'SCHEDULE_CONFLICT') {
+                    return new Error('Ya estás inscrito en otro evento en este horario');
+                }
+                return new Error(errorData.message || 'Error en la solicitud. Por favor, verifica los datos.');
+            case 401:
+                clearAuth();
+                handleNotAuthenticated();
+                return new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+            case 403:
+                return new Error('No tienes permiso para realizar esta acción');
+            case 404:
+                return new Error(errorData.message || 'Recurso no encontrado');
+            case 409:
+                return new Error(errorData.message || 'Conflicto con la operación solicitada');
+            case 429:
+                return new Error('Demasiadas solicitudes. Por favor, espera un momento');
+            default:
+                return new Error(errorData.message || 'Error en el servidor. Por favor, intenta más tarde');
         }
-    } catch (error) {
-        console.error('Error al actualizar UI:', error);
-        // No mostrar toast aquí ya que es una actualización visual secundaria
     }
-}
-
+};
 
 // #endregion
 
@@ -580,17 +650,32 @@ function createEventCard(schedule) {
     const availableSpots = schedule.availableSpots ?? 
         (schedule.capacity - (schedule.currentInscriptions || 0));
     const isAvailable = availableSpots > 0;
-    const isInscribed = schedule.userInscribed;
+    const isInscribed = schedule.userInscribed || false;
     
-    let buttonClass = isInscribed ? 'btn-success' : (isAvailable ? 'btn-danger' : 'btn-secondary');
-    let buttonText = isInscribed ? '<i class="fas fa-check me-2"></i>INSCRIPTO' : 
-                    (isAvailable ? 'INSCRIBIRSE' : 'AGOTADO');
-    let buttonDisabled = isInscribed || !isAvailable;
+    // Determinar el estado del botón
+    let buttonState = {
+        class: 'btn-danger',
+        text: 'INSCRIBIRSE',
+        disabled: false
+    };
+
+    if (isInscribed) {
+        buttonState = {
+            class: 'btn-success',
+            text: '<i class="fas fa-check me-2"></i>INSCRIPTO',
+            disabled: true
+        };
+    } else if (!isAvailable) {
+        buttonState = {
+            class: 'btn-secondary',
+            text: 'AGOTADO',
+            disabled: true
+        };
+    }
 
     return `
         <div class="col-12 col-md-6 col-lg-4 mb-4" data-schedule-id="${schedule.scheduleId}">
             <div class="card bg-dark text-white h-100 border-secondary hover-border-danger">
-                <!-- Contenedor de imagen responsive -->
                 <div class="position-relative card-img-container">
                     <img 
                         src="${schedule.event.photo || 'https://via.placeholder.com/400x300'}"
@@ -630,10 +715,10 @@ function createEventCard(schedule) {
 
                     <button
                         onclick="handleInscription('${schedule.scheduleId}')"
-                        class="btn w-100 ${buttonClass} mt-auto"
-                        ${buttonDisabled ? 'disabled' : ''}
+                        class="btn w-100 ${buttonState.class} mt-auto"
+                        ${buttonState.disabled ? 'disabled' : ''}
                     >
-                        ${buttonText}
+                        ${buttonState.text}
                     </button>
                 </div>
             </div>
@@ -674,93 +759,144 @@ function groupSchedulesByTime(schedules) {
 // Modificar la función handleInscription
 // Modificar la función handleInscription
 async function handleInscription(scheduleId) {
-    // Obtener el botón antes de cualquier operación
     const buttonElement = document.querySelector(`[data-schedule-id="${scheduleId}"] button`);
-    if (!buttonElement) {
-        console.error('Botón no encontrado');
-        return;
-    }
+    if (!buttonElement) return;
 
-    // Guardar el estado original del botón
-    const originalText = buttonElement.innerHTML;
-    const originalDisabled = buttonElement.disabled;
+    const originalState = {
+        text: buttonElement.innerHTML,
+        disabled: buttonElement.disabled,
+        className: buttonElement.className
+    };
 
     try {
-        const token = getAuthToken();
-        if (!token) {
+        if (!getAuthToken()) {
             showToast('Debe iniciar sesión para inscribirse', 'warning');
             return;
         }
 
-        // Función para actualizar el estado del botón
-        const updateButtonState = (isProcessing) => {
-            buttonElement.disabled = isProcessing;
-            buttonElement.innerHTML = isProcessing ? 
-                '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...' : 
-                originalText;
-        };
+        // Deshabilitar el botón y mostrar loading
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
 
-        // Iniciar procesamiento
-        updateButtonState(true);
-
-        // Verificar cupos disponibles
+        // 1. Verificar cupos disponibles antes de inscribir
         const availableSpots = await fetchAvailableSpots(scheduleId);
-        if (availableSpots === null || availableSpots <= 0) {
-            showToast('No hay cupos disponibles', 'warning');
-            updateButtonState(false);
-            return;
+        if (!availableSpots) {
+            throw new Error('No hay cupos disponibles');
         }
 
-        // Intentar realizar la inscripción
-        const response = await ApiClient.request('/inscriptions', {
+        // 2. Realizar la inscripción
+        await ApiClient.request('/inscriptions', {
             method: 'POST',
             body: JSON.stringify({ scheduleId })
-        }).catch(error => {
-            // Manejar errores específicos
-            if (error.status === 400 && error.message.includes('horario')) {
-                showToast('Ya estás inscrito en otro evento en este horario', 'warning');
-                throw error;
-            }
-            throw error;
         });
 
-        // Si la inscripción fue exitosa
-        try {
-            // Enviar notificación por email (no bloquear la UI por esto)
-            const userData = getUserData();
-            NotificationService.sendEmailNotification(userData.id, {
-                type: 'new_inscription',
-                scheduleId,
-                eventName: response.eventName
-            }).catch(error => {
-                console.error('Error al enviar notificación:', error);
-                // No mostrar error al usuario ya que es secundario
-            });
-        } catch (error) {
-            console.error('Error en notificación:', error);
-            // No afectar el flujo principal
-        }
-
-        // Actualizar UI para mostrar éxito
-        showToast('Inscripción exitosa', 'success');
+        // 3. Obtener los cupos actualizados después de la inscripción
+        const updatedSpots = await fetchAvailableSpots(scheduleId);
         
-        // Actualizar la UI del botón y la card
+        // 4. Actualizar la UI con los cupos reales
+        await updateCardSpots(scheduleId, updatedSpots);
+        
+        // 5. Actualizar el estado del botón
         buttonElement.className = 'btn w-100 btn-success mt-auto';
         buttonElement.disabled = true;
         buttonElement.innerHTML = '<i class="fas fa-check me-2"></i>INSCRIPTO';
 
-        // Actualizar los cupos disponibles
-        await updateUIAfterInscription(scheduleId);
-        
+        showToast('Inscripción exitosa', 'success');
+
+        // Enviar notificación (sin esperar)
+        const userData = getUserData();
+        if (userData) {
+            NotificationService.sendEmailNotification(userData.id, {
+                type: 'new_inscription',
+                scheduleId
+            }).catch(console.warn);
+        }
+
     } catch (error) {
-        // Restaurar el botón a su estado original en caso de error
-        buttonElement.disabled = originalDisabled;
-        buttonElement.innerHTML = originalText;
-        
-        // Manejar el error
-        handleError(error);
+        // Restaurar estado original del botón
+        buttonElement.innerHTML = originalState.text;
+        buttonElement.disabled = originalState.disabled;
+        buttonElement.className = originalState.className;
+
+        if (error.message.includes('horario')) {
+            showToast('Ya estás inscrito en otro evento en este horario', 'warning');
+        } else {
+            handleError(error);
+        }
     }
 }
+
+// Mejorar la función para actualizar la UI después de una inscripción
+async function updateUIAfterInscription(scheduleId, isInscribed = true) {
+    const card = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+    if (!card) return;
+
+    // Actualizar el botón
+    const buttonElement = card.querySelector('button');
+    if (buttonElement) {
+        if (isInscribed) {
+            buttonElement.className = 'btn w-100 btn-success mt-auto';
+            buttonElement.disabled = true;
+            buttonElement.innerHTML = '<i class="fas fa-check me-2"></i>INSCRIPTO';
+        } else {
+            buttonElement.className = 'btn w-100 btn-danger mt-auto';
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = 'INSCRIBIRSE';
+        }
+    }
+
+    // Actualizar cupos con reintentos
+    let availableSpots = null;
+    for (let i = 0; i < 3; i++) {
+        try {
+            const response = await fetch(`/api/inscriptions/available-spots/${scheduleId}`);
+            if (response.ok) {
+                const data = await response.json();
+                availableSpots = data.availableSpots;
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+            console.warn(`Intento ${i + 1} fallido:`, error);
+        }
+    }
+
+    if (availableSpots !== null) {
+        const spotsElement = card.querySelector('.available-spots span');
+        if (spotsElement) {
+            const isAvailable = availableSpots > 0;
+            spotsElement.className = `badge bg-${isAvailable ? 'success' : 'danger'}`;
+            spotsElement.textContent = `${availableSpots} cupos`;
+            
+
+        }
+    }
+}
+
+// Actualizar los cupos en la card consultando siempre a la base de datos
+async function updateCardSpots(scheduleId, spots) {
+    const card = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+    if (!card) return;
+
+    const spotsElement = card.querySelector('.available-spots span');
+    if (spotsElement) {
+        const isAvailable = spots > 0;
+        spotsElement.className = `badge bg-${isAvailable ? 'success' : 'danger'}`;
+        spotsElement.textContent = `${spots} cupos`;
+
+        // Si no hay cupos, deshabilitar el botón de inscripción
+        if (!isAvailable) {
+            const button = card.querySelector('button');
+            if (button) {
+                button.className = 'btn w-100 btn-secondary mt-auto';
+                button.disabled = true;
+                button.innerHTML = 'AGOTADO';
+            }
+        }
+    }
+}
+
+
 
 // Función auxiliar para verificar si el usuario está inscrito en un evento
 async function checkUserInscription(scheduleId) {
@@ -821,37 +957,13 @@ async function showUserInscriptions() {
     }
 }
 
-// Función para obtener todos los cupos disponibles actuales
-async function fetchAllAvailableSpots() {
-    try {
-        const response = await fetch('/api/inscriptions/all-available-spots', {
-            headers: {
-                'Authorization': `Bearer ${getAuthToken()}`
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Error al obtener cupos disponibles:', error);
-        return null;
-    }
-}
-// Función para obtener los cupos disponibles
+// Función para obtener los cupos disponibles con cache
 async function fetchAvailableSpots(scheduleId) {
     try {
-        const response = await fetch(`/api/inscriptions/available-spots/${scheduleId}`);
-        if (!response.ok) {
-            throw new Error('Error al obtener cupos disponibles');
-        }
-        const data = await response.json();
+        const data = await ApiClient.request(`/inscriptions/available-spots/${scheduleId}`);
         return data.availableSpots;
     } catch (error) {
-        console.error('Error al obtener cupos:', error);
+        console.warn(`Error al obtener cupos para ${scheduleId}:`, error);
         return null;
     }
 }
@@ -961,13 +1073,14 @@ function createTimeHeader(time) {
 async function loadSchedules() {
     try {
         const schedules = await fetchSchedules();
+        
+        // Obtener los cupos disponibles para cada schedule
         const schedulesWithSpots = await Promise.all(
-            schedules.map(async schedule => {
+            schedules.map(async (schedule) => {
                 const availableSpots = await fetchAvailableSpots(schedule.scheduleId);
                 return {
                     ...schedule,
-                    availableSpots: availableSpots !== null ? availableSpots : 
-                        (schedule.capacity - (schedule.currentInscriptions || 0))
+                    availableSpots: availableSpots ?? (schedule.capacity - (schedule.currentInscriptions || 0))
                 };
             })
         );
@@ -975,39 +1088,42 @@ async function loadSchedules() {
         const filteredSchedules = filterSchedules(schedulesWithSpots, filters.searchTerm);
         const groupedSchedules = groupSchedulesByTime(filteredSchedules);
         
-        const eventsGrid = document.getElementById('eventsGrid');
-        eventsGrid.innerHTML = '';
-
-        if (Object.keys(groupedSchedules).length === 0) {
-            eventsGrid.innerHTML = `
-                <div class="col-12 text-center text-white">
-                    <h4>No se encontraron eventos</h4>
-                </div>
-            `;
-            return;
-        }
-
-        Object.entries(groupedSchedules).forEach(([time, schedules]) => {
-            const timeSection = document.createElement('div');
-            timeSection.className = 'col-12 mb-5';
-            
-            timeSection.innerHTML = `
-                <div class="mb-4">
-                    ${createTimeHeader(time)}
-                </div>
-                <div class="row g-4">
-                    ${schedules.map(schedule => createEventCard(schedule)).join('')}
-                </div>
-            `;
-            
-            eventsGrid.appendChild(timeSection);
-        });
+        updateEventsGrid(groupedSchedules);
     } catch (error) {
         console.error('Error al cargar schedules:', error);
         showToast('Error al cargar los eventos', 'error');
     }
 }
+// Separar la actualización del grid en una función aparte
+function updateEventsGrid(groupedSchedules) {
+    const eventsGrid = document.getElementById('eventsGrid');
+    eventsGrid.innerHTML = '';
 
+    if (Object.keys(groupedSchedules).length === 0) {
+        eventsGrid.innerHTML = `
+            <div class="col-12 text-center text-white">
+                <h4>No se encontraron eventos</h4>
+            </div>
+        `;
+        return;
+    }
+
+    Object.entries(groupedSchedules).forEach(([time, schedules]) => {
+        const timeSection = document.createElement('div');
+        timeSection.className = 'col-12 mb-5';
+        
+        timeSection.innerHTML = `
+            <div class="mb-4">
+                ${createTimeHeader(time)}
+            </div>
+            <div class="row g-4">
+                ${schedules.map(schedule => createEventCard(schedule)).join('')}
+            </div>
+        `;
+        
+        eventsGrid.appendChild(timeSection);
+    });
+}
 // Inicializar event listeners para el filtro de búsqueda
 function initializeFilterListeners() {
     const searchInput = document.getElementById('searchInput');
@@ -1088,24 +1204,48 @@ function initializeStyles() {
 
 // Una única inicialización para todo
 document.addEventListener('DOMContentLoaded', () => {
-    // Agregar los estilos responsive
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.href = 'data:;base64,iVBORw0KGgo=';
+    document.head.appendChild(favicon);
+
     initializeStyles();
     
     // Inicializar toasts
-    document.querySelectorAll('.toast').forEach(toastEl => {
-        new bootstrap.Toast(toastEl);
+    document.querySelectorAll('.toast').forEach(el => {
+        new bootstrap.Toast(el, {
+            animation: true,
+            autohide: true,
+            delay: 3000
+        });
     });
 
-    // Verificar autenticación
-    checkAuth();
-
-    // Inicializar event listeners
-    initializeEventListeners();
-
-    // Inicializar filtros
-    initializeFilterListeners();
-
-    // Cargar datos iniciales
-    loadSchedules();
+    // Inicialización con manejo de errores
+    Promise.all([
+        checkAuth(),
+        initializeEventListeners(),
+        initializeFilterListeners()
+    ]).catch(error => {
+        console.error('Error en inicialización:', error);
+        handleNotAuthenticated();
+    }).finally(() => {
+        loadSchedulesWithRetry();
+    });
 });
+// Función para cargar schedules con reintentos
+async function loadSchedulesWithRetry(retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            await loadSchedules();
+            return;
+        } catch (error) {
+            console.error(`Error al cargar schedules (intento ${i + 1}/${retries}):`, error);
+            if (i === retries - 1) {
+                showToast('Error al cargar los eventos. Por favor, recarga la página.', 'error');
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+            }
+        }
+    }
+}
 // #endregion
