@@ -1,3 +1,4 @@
+/* Estilos base */
 body {
     font-family: Arial, sans-serif;
     line-height: 1.6;
@@ -6,14 +7,70 @@ body {
     min-height: 100vh;
 }
 
+/* Estilos de autenticación y modal */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1040;
+}
+
+#authModal {
+    z-index: 1050;
+}
+
+#authModal .modal-dialog {
+    z-index: 1051;
+}
+
+#authModal .modal-content {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 1052;
+    background: white;
+}
+
+#authModal .modal-header {
+    background-color: #333;
+    color: white;
+    border-bottom: none;
+    padding: 1rem;
+}
+
+#authModal .modal-body {
+    padding: 20px;
+    position: relative;
+    z-index: 1053;
+}
+
+#authModal input[type="password"] {
+    position: relative;
+    z-index: 1053;
+    background: white;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#authForm {
+    position: relative;
+    z-index: 1053;
+}
+
+/* Ocultar/Mostrar contenido basado en autenticación */
+body:not(.authenticated) .container,
+body:not(.authenticated) #showEventsBtn,
+body:not(.authenticated) #eventsModal {
+    display: none;
+}
+
+/* Contenedor principal */
 .container {
     width: 80%;
     margin: auto;
     overflow: hidden;
     padding: 20px;
-    margin-bottom: 40px; /* Espacio al final del contenedor */
+    margin-bottom: 40px;
 }
 
+/* Botón de mostrar eventos */
 #showEventsBtn {
     position: fixed;
     top: 20px;
@@ -27,6 +84,7 @@ body {
     z-index: 1000;
 }
 
+/* Modal de eventos */
 .modal {
     display: none;
     position: fixed;
@@ -41,15 +99,16 @@ body {
 
 .modal-content {
     background-color: white;
-    margin: 5% auto; /* Cambiado de 15% a 5% para que aparezca más arriba */
+    margin: 5% auto;
     padding: 20px;
     width: 70%;
     border-radius: 5px;
-    max-height: 80vh; /* Altura máxima del modal */
-    overflow-y: auto; /* Permite scroll dentro del modal */
+    max-height: 80vh;
+    overflow-y: auto;
     position: relative;
 }
 
+/* Botón cerrar */
 .close {
     position: sticky;
     top: 0;
@@ -61,9 +120,10 @@ body {
     z-index: 1001;
 }
 
+/* Lista de eventos */
 #eventList {
     margin-top: 20px;
-    max-height: calc(80vh - 100px); /* Altura máxima de la lista */
+    max-height: calc(80vh - 100px);
     overflow-y: auto;
 }
 
@@ -90,6 +150,7 @@ body {
     border: 1px solid #ddd;
 }
 
+/* Botones */
 .delete-btn {
     background-color: #ff0000;
     color: #fff;
@@ -98,6 +159,20 @@ body {
     cursor: pointer;
 }
 
+#authModal .btn-primary {
+    background-color: #ff4081;
+    border-color: #ff4081;
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+#authModal .btn-primary:hover {
+    background-color: #f50057;
+    border-color: #f50057;
+}
+
+/* Formulario */
 form {
     background: #f4f4f4;
     padding: 20px;
@@ -105,9 +180,11 @@ form {
     border-radius: 5px;
 }
 
+/* Campos del formulario */
 input[type="text"], 
 input[type="number"], 
 input[type="time"],
+input[type="password"],
 textarea {
     width: 100%;
     padding: 8px;
@@ -115,8 +192,10 @@ textarea {
     border: 1px solid #ddd;
     border-radius: 4px;
     box-sizing: border-box;
+    background: white;
 }
 
+/* Contenedor de horarios */
 .schedule-container {
     margin-bottom: 10px;
     display: flex;
@@ -128,6 +207,7 @@ textarea {
     flex: 1;
 }
 
+/* Botones de acción */
 .add-schedule-btn {
     background-color: #333;
     color: #fff;
@@ -159,7 +239,19 @@ textarea {
     border-radius: 4px;
 }
 
-/* Estilos para el scroll personalizado */
+/* Estilos para toasts */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1100;
+}
+
+.toast {
+    min-width: 200px;
+}
+
+/* Personalización del scroll */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -175,4 +267,55 @@ textarea {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+/* Ajustes responsive */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+    }
+
+    .modal-content {
+        width: 90%;
+        margin: 10% auto;
+    }
+
+    #showEventsBtn {
+        top: 10px;
+        right: 10px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+
+    #authModal .modal-dialog {
+        margin: 1rem;
+    }
+}
+
+/* Asegurarse de que los modales de Bootstrap funcionen correctamente */
+.modal.fade .modal-dialog {
+    transition: transform .3s ease-out;
+    transform: translate(0, -50px);
+}
+
+.modal.show .modal-dialog {
+    transform: none;
+}
+
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 1rem);
+}
+
+/* Mejorar la visibilidad del formulario de autenticación */
+#authForm .form-label {
+    color: #333;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+#authForm .form-control:focus {
+    border-color: #ff4081;
+    box-shadow: 0 0 0 0.2rem rgba(255, 64, 129, 0.25);
 }

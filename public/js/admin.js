@@ -1,4 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Constantes y variables importantes
+    const PASSWORD = 'jnsm2022';
+    let loginAttempts = 0;
+    let isAuthenticated = false; // Control de autenticación en memoria
+
+    // Inicialización de elementos Bootstrap
+    const authModal = new bootstrap.Modal(document.getElementById('authModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+    const authToast = new bootstrap.Toast(document.getElementById('authToast'), {
+        delay: 3000
+    });
+    const eventToast = new bootstrap.Toast(document.getElementById('eventToast'), {
+        delay: 3000
+    });
+
+    // Referencias a elementos DOM
     const modal = document.getElementById('eventsModal');
     const showEventsBtn = document.getElementById('showEventsBtn');
     const closeBtn = document.querySelector('.close');
@@ -7,9 +25,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const schedules = document.getElementById('schedules');
     const addScheduleBtn = document.querySelector('.add-schedule-btn');
 
+    // Función para mostrar el modal de autenticación
+    const showAuthModal = () => {
+        document.body.classList.remove('authenticated');
+        isAuthenticated = false;
+        authModal.show();
+        setTimeout(() => {
+            document.getElementById('password').focus();
+        }, 500);
+    };
+
+    // Manejar el formulario de autenticación
+    document.getElementById('authForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const passwordInput = document.getElementById('password');
+        const password = passwordInput.value;
+
+        if (password === PASSWORD) {
+            isAuthenticated = true;
+            document.body.classList.add('authenticated');
+            authModal.hide();
+            passwordInput.value = '';
+            loginAttempts = 0;
+            
+            document.querySelector('#eventToast .toast-body').textContent = '¡Bienvenido al panel de administración!';
+            document.getElementById('eventToast').classList.remove('bg-danger');
+            document.getElementById('eventToast').classList.add('bg-success');
+            eventToast.show();
+        } else {
+            loginAttempts++;
+            passwordInput.value = '';
+            
+            let message = `Contraseña incorrecta. Intento ${loginAttempts} de 3`;
+            if (loginAttempts >= 3) {
+                message = 'Has excedido el número de intentos. Pero puedes seguir intentando.';
+            }
+            
+            document.querySelector('#authToast .toast-body').textContent = message;
+            authToast.show();
+        }
+    });
+
+    // Función para verificar autenticación
+    const checkAuth = () => {
+        if (!isAuthenticated) {
+            showAuthModal();
+            return false;
+        }
+        return true;
+    };
+
+    // Event Listeners para el modal de eventos
     showEventsBtn.addEventListener('click', () => {
-        modal.style.display = 'block';
-        fetchEvents();
+        if (checkAuth()) {
+            modal.style.display = 'block';
+            fetchEvents();
+        }
     });
 
     closeBtn.addEventListener('click', () => {
@@ -22,16 +93,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Función para obtener eventos
     function fetchEvents() {
+        if (!checkAuth()) return;
+
         fetch('/api/events/get-events')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
             .then(data => {
                 console.log("Datos recibidos:", data);
-                const events = Array.isArray(data.data) ? data.data : null;
-
-                if (!events) {
-                    throw new Error("La respuesta no es un array de eventos");
-                }
+                const events = Array.isArray(data.data) ? data.data : [];
 
                 eventList.innerHTML = '';
                 events.forEach(event => {
@@ -76,25 +151,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 });
 
-                // Agregar listeners al botón de ver inscripciones
+                // Event listeners para botones de inscripciones
                 document.querySelectorAll('.view-inscriptions-btn').forEach(button => {
                     button.addEventListener('click', function() {
-                        const scheduleId = this.getAttribute('data-schedule-id');
-                        openInscriptionsPage(scheduleId);
+                        if (checkAuth()) {
+                            const scheduleId = this.getAttribute('data-schedule-id');
+                            openInscriptionsPage(scheduleId);
+                        }
                     });
                 });
 
                 addDeleteEventListeners();
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                document.querySelector('#eventToast .toast-body').textContent = 'Error al cargar los eventos';
+                document.getElementById('eventToast').classList.remove('bg-success');
+                document.getElementById('eventToast').classList.add('bg-danger');
+                eventToast.show();
+            });
     }
 
-    // Función para abrir la página de inscripciones en una nueva pestaña
+    // Función para abrir página de inscripciones
     function openInscriptionsPage(scheduleId) {
+        if (!checkAuth()) return;
         const url = `/showInscriptions.html?scheduleId=${scheduleId}`;
-        window.open(url, '_blank'); // Abre en una nueva pestaña
+        window.open(url, '_blank');
     }
 
+    // Función para formatear tiempo
     function formatTime(timeString) {
         if (!timeString) return 'N/A';
         try {
@@ -108,9 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Función para agregar listeners de eliminación
     function addDeleteEventListeners() {
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.addEventListener('click', function(e) {
+                if (!checkAuth()) return;
                 e.stopPropagation();
                 if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
                     const eventId = this.getAttribute('data-id');
@@ -120,24 +207,54 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Función para eliminar evento
     function deleteEvent(eventId) {
-        fetch(`/api/events/event/${eventId}`, { method: 'DELETE' })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data.message);
-                fetchEvents();
-            })
-            .catch(error => console.error('Error:', error));
+        if (!checkAuth()) return;
+        fetch(`/api/events/event/${eventId}`, { 
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data.message);
+            fetchEvents();
+            document.querySelector('#eventToast .toast-body').textContent = 'Evento eliminado exitosamente';
+            document.getElementById('eventToast').classList.remove('bg-danger');
+            document.getElementById('eventToast').classList.add('bg-success');
+            eventToast.show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.querySelector('#eventToast .toast-body').textContent = 'Error al eliminar el evento';
+            document.getElementById('eventToast').classList.remove('bg-success');
+            document.getElementById('eventToast').classList.add('bg-danger');
+            eventToast.show();
+        });
     }
 
+    // Event listener para el formulario de eventos
     eventForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+        if (!checkAuth()) {
+            e.preventDefault();
+            return;
+        }
 
+        e.preventDefault();
         const scheduleInputs = document.querySelectorAll('.schedule-container');
         const capacity = parseInt(document.getElementById('capacity').value);
 
         if (!capacity || capacity <= 0) {
-            alert('La capacidad debe ser un número mayor que 0');
+            document.querySelector('#eventToast .toast-body').textContent = 'La capacidad debe ser un número mayor que 0';
+            document.getElementById('eventToast').classList.remove('bg-success');
+            document.getElementById('eventToast').classList.add('bg-danger');
+            eventToast.show();
             return;
         }
 
@@ -147,7 +264,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
 
         if (schedulesList.length === 0) {
-            alert('Debe agregar al menos un horario');
+            document.querySelector('#eventToast .toast-body').textContent = 'Debe agregar al menos un horario';
+            document.getElementById('eventToast').classList.remove('bg-success');
+            document.getElementById('eventToast').classList.add('bg-danger');
+            eventToast.show();
             return;
         }
 
@@ -170,28 +290,44 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             body: JSON.stringify(formData),
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('Success:', data);
-            alert('Evento creado exitosamente');
+            document.querySelector('#eventToast .toast-body').textContent = 'Evento creado exitosamente';
+            document.getElementById('eventToast').classList.remove('bg-danger');
+            document.getElementById('eventToast').classList.add('bg-success');
+            eventToast.show();
+            
             eventForm.reset();
 
             const scheduleContainers = document.querySelectorAll('.schedule-container');
             scheduleContainers.forEach((container, index) => {
-                if (index > 0) { 
+                if (index > 0) {
                     container.remove();
                 }
             });
+            
             fetchEvents();
-            modal.style.display = 'block'; 
+            modal.style.display = 'block';
         })
         .catch((error) => {
             console.error('Error:', error);
-            alert('Error al crear el evento');
+            document.querySelector('#eventToast .toast-body').textContent = 'Error al crear el evento';
+            document.getElementById('eventToast').classList.remove('bg-success');
+            document.getElementById('eventToast').classList.add('bg-danger');
+            eventToast.show();
         });
     });
 
+    // Event listener para agregar horarios
     addScheduleBtn.addEventListener('click', function() {
+        if (!checkAuth()) return;
+        
         const container = document.createElement('div');
         container.className = 'schedule-container';
         container.innerHTML = `
@@ -204,4 +340,13 @@ document.addEventListener('DOMContentLoaded', () => {
             schedules.removeChild(container);
         });
     });
+
+    // Agregar listener para recargar la página
+    window.addEventListener('beforeunload', () => {
+        isAuthenticated = false;
+        document.body.classList.remove('authenticated');
+    });
+
+    // Mostrar el modal de autenticación al cargar la página
+    showAuthModal();
 });

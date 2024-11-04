@@ -176,9 +176,17 @@ function handleAuthenticated() {
     
     const userData = getUserData();
     if (userData) {
+        // Actualizar nombre en desktop
         const userFullNameEl = document.getElementById('userFullName');
         if (userFullNameEl) {
-            userFullNameEl.textContent = `${userData.first_name} ${userData.last_name}`;
+            userFullNameEl.querySelector('span').textContent = 
+                `${userData.first_name} ${userData.last_name}`;
+        }
+        
+        // Actualizar nombre en móvil
+        const userNameMobile = document.querySelector('.user-name-mobile');
+        if (userNameMobile) {
+            userNameMobile.textContent = userData.first_name;
         }
     }
 }
@@ -1208,6 +1216,17 @@ document.addEventListener('DOMContentLoaded', () => {
     favicon.rel = 'icon';
     favicon.href = 'data:;base64,iVBORw0KGgo=';
     document.head.appendChild(favicon);
+    const navLinks = document.querySelectorAll('.navbar-collapse .btn');
+    const navbarToggler = document.querySelector('.navbar-toggler');
+    const navbarCollapse = document.querySelector('.navbar-collapse');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            if (navbarCollapse.classList.contains('show')) {
+                navbarToggler.click();
+            }
+        });
+    });
 
     initializeStyles();
     
