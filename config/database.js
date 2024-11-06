@@ -11,8 +11,6 @@ console.log('Database Config:', {
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
-
-
 });
 
 const pool = new Pool({
@@ -21,9 +19,6 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
-  ssl: {
-    rejectUnauthorized: false // Necesario para desarrollo
-  },
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000
